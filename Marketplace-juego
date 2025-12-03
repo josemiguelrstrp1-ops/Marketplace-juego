@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Marketplace Meme Colombiano</title>
+<style>
+body { font-family: Arial; background:#f2f2f2; text-align:center; margin:0; padding:0; }
+.pantalla { display:none; padding:20px; }
+button { padding:10px; margin:10px; font-size:16px; cursor:pointer; }
+#topCoins { font-size:20px; display:none; }
+#juegoArea { width:300px; height:400px; background:#222; margin:auto; position:relative; overflow:hidden; }
+#player { width:40px; height:40px; background:#0f0; position:absolute; bottom:10px; left:130px; }
+.cubo { width:40px; height:40px; background:red; position:absolute; top:0; }
+#objLista div, #invLista div, #histLista div { margin:5px; padding:5px; border:1px solid #000; }
+.botonesMovimiento { margin-top:10px; }
+.botonesMovimiento button { width:80px; height:50px; font-size:24px; margin:5px; }
+</style>
+</head>
+<body>
+
+<h2 id="topCoins">CarriCoins: 0</h2>
+
+<div id="login" class="pantalla" style="display:block;">
+<h1>Iniciar sesión / Crear cuenta</h1>
+<input id="user" placeholder="Usuario"><br>
+<input id="pass" placeholder="Contraseña"><br>
+<button onclick="crearCuenta()">Crear cuenta</button>
+<button onclick="entrar()">Entrar</button>
+</div>
+
+<div id="menu" class="pantalla">
+<h1>Menú Principal</h1>
+<button onclick="mostrar('juego')">Jugar esquivar cubos</button><br>
+<button onclick="mostrar('market')">Marketplace</button><br>
+<button onclick="mostrar('inventario')">Inventario</button><br>
+<button onclick="mostrar('historial')">Historial de ventas</button><br>
+<button onclick="mostrar('objLista')">Lista de objetos</button><br>
+<button onclick="mostrar('regalo')">Abrir regalo (500 toques)</button><br>
+<button onclick="mostrar('ruleta')">Ruleta de objetos</button>
+</div>
+
+<div id="juego" class="pantalla">
+<h2>Esquivar cubos</h2>
+<div id="juegoArea">
+<div id="player"></div>
+</div>
+<p id="score">Puntos: 0</p>
+<div class="botonesMovimiento">
+<button onclick="mover(-10)">⬅️</button>
+<button onclick="mover(10)">➡️</button>
+<button id="pauseBtn">⏹️ Pausar/Reanudar</button>
+</div>
+<button onclick="reiniciarCubos()">🔄 Reiniciar Cubos</button><br>
+<button onclick="volverMenu()">Volver al menú</button>
+</div>
+
+<div id="market" class="pantalla">
+<h2>Marketplace</h2>
+<h3>Vender</h3>
+<select id="sellItem"></select><br>
+<input id="sellPrice" placeholder="Precio en CarriCoins"><br>
+<button onclick="ponerEnVenta()">Poner en venta</button>
+<h3>Comprar</h3>
+<div id="listaVentas"></div>
+<button onclick="volverMenu()">Volver</button>
+</div>
+
+<div id="inventario" class="pantalla">
+<h2>Inventario</h2>
+<div id="invLista"></div>
+<button onclick="volverMenu()">Volver</button>
+</div>
+
+<div id="historial" class="pantalla">
+<h2>Historial</h2>
+<div id="histLista"></div>
+<button onclick="volverMenu()">Volver</button>
+</div>
+
+<div id="objLista" class="pantalla">
+<h2>Objetos por rareza</h2>
+<div id="listaObjetos"></div>
+<button onclick="volverMenu()">Volver</button>
+</div>
+
+<div id="regalo" class="pantalla">
+<h2>Regalo</h2>
+<p>Toca 500 veces para recibir un objeto</p>
+<p id="toques">Toques: 0 / 500</p>
+<button id="tocarRegalo">🎁</button>
+<button onclick="volverMenu()">Volver</button>
+</div>
+
+<div id="ruleta" class="pantalla">
+<h2>Ruleta de Objetos</h2>
+<p>Tickets disponibles: <span id="ticketCount">0</span></p>
+<button onclick="comprarTicket(1)">Comprar 1 Ticket (100 CC)</button>
+<button onclick="comprarTicket(10)">Paquete 10 Tickets (900 CC)</button><br>
+<button onclick="usarTicket()">Usar Ticket en Ruleta</button><br>
+<button onclick="volverMenu()">Volver</button>
+</div>
+
+<script>
+// Base de datos
+let db = JSON.parse(localStorage.getItem("db")) || {};
+let userActual = localStorage.getItem("userActual") || null;
+let puntos = 0;
+let cubosActivos = [];
+let intervalo = null;
+let juegoPausado = false;
+let toques = 0;
+let ventas = [];
+let player = document.getElementById('player');
+
+let objetosRangos = [
+{nombre:"🦧 Goriloco-Bananín",rango:"Común"},{nombre:"🐸 PepeSaltarin",rango:"Común"},{nombre:"🐔 PolloNoob",rango:"Común"},{nombre:"🐢 TortuSpeed",rango:"Común"},{nombre:"🐍 SnekGamer",rango:"Común"},{nombre:"🐁 RatónFail",rango:"Común"},{nombre:"🐙 PulpoBrainrot",rango:"Común"},
+{nombre:"🐲 DragónThug",rango:"Raro"},{nombre:"🦍 MonoBruh",rango:"Raro"},{nombre:"🦖 T-RexEpicFail",rango:"Raro"},{nombre:"🦁 LeónMood",rango:"Raro"},{nombre:"🦊 ZorroCringe",rango:"Raro"},{nombre:"🐧 PenguinoXD",rango:"Raro"},{nombre:"🐵 MonoChad",rango:"Raro"},
+{nombre:"🐙 PulpoOver9000",rango:"Épico"},{nombre:"🦄 UnicórnitoLOL",rango:"Épico"},{nombre:"🐺 LoboSus",rango:"Épico"},{nombre:"🐉 DragónYeet",rango:"Épico"},{nombre:"🦌 RenoBruhMoment",rango:"Épico"},{nombre:"🐴 CaballoCringe",rango:"Épico"},{nombre:"🦀 CrabbyMad",rango:"Épico"},
+{nombre:"👑 ReyCarritoSus",rango:"Legendario"},{nombre:"🐉 DragonCarroYeet",rango:"Legendario"},{nombre:"🦄 UnicórnitoBruh",rango:"Legendario"},{nombre:"🦖 T-RexChad",rango:"Legendario"},{nombre:"🐲 DragónEpicFail",rango:"Legendario"},{nombre:"🐉 FénixLOL",rango:"Legendario"},{nombre:"🐉 HydraSus",rango:"Legendario"},
+{nombre:"🐲 DragónFinalYeet",rango:"UltraLegendario"},{nombre:"🐉 FénixCarroLOL",rango:"UltraLegendario"},{nombre:"🐉 HydraUltraBruh",rango:"UltraLegendario"},{nombre:"👑 CarritoSupremoEpic",rango:"UltraLegendario"},{nombre:"🦄 UnicórnitoOP",rango:"UltraLegendario"},{nombre:"👹 MemeDios",rango:"Dioses"}];
+
+// Funciones generales
+function guardarDB(){localStorage.setItem("db", JSON.stringify(db)); localStorage.setItem("userActual", userActual);}
+function mostrar(id){document.querySelectorAll('.pantalla').forEach(p=>p.style.display='none'); document.getElementById(id).style.display='block'; if(id==="objLista") mostrarListaObjetos();}
+function volverMenu(){mostrar('menu');}
+function actualizarCoins(){if(userActual) document.getElementById('topCoins').innerText="CarriCoins: "+db[userActual].coins; document.getElementById('topCoins').style.display='block';}
+
+// Crear cuenta
+function crearCuenta(){
+  let user=document.getElementById('user').value;
+  let pass=document.getElementById('pass').value;
+  if(!user||!pass){alert("Usuario y contraseña requeridos"); return;}
+  if(db[user]){alert("Usuario ya existe"); return;}
+  db[user]={pass:pass,coins:50,objetos:[],historial:[],tickets:0};
+  for(let i=0;i<5;i++){let obj=obtenerObjetoAleatorio(); db[user].objetos.push(obj);}
+  guardarDB();
+  alert("Cuenta creada con 5 objetos y 50 CarriCoins");
+}
+
+// Entrar
+function entrar(){
+  let user=document.getElementById('user').value;
+  let pass=document.getElementById('pass').value;
+  if(!db[user]||db[user].pass!==pass){alert("Usuario o contraseña incorrectos"); return;}
+  userActual=user; actualizarCoins(); actualizarInventario(); actualizarHistorial(); document.getElementById('ticketCount').innerText=db[userActual].tickets; guardarDB(); mostrar('menu'); recompensaLogin();
+}
+
+// Inventario
+function actualizarInventario(){
+  let inv=document.getElementById('invLista'); inv.innerHTML="";
+  db[userActual].objetos.forEach((o,i)=>{let d=document.createElement('div'); d.innerText=o.nombre+" ("+o.rango+")"; inv.appendChild(d);});
+  let sell=document.getElementById('sellItem'); sell.innerHTML="";
+  db[userActual].objetos.forEach((o,i)=>{let option=document.createElement('option'); option.value=i; option.text=o.nombre+" ("+o.rango+")"; sell.appendChild(option);});
+  actualizarMarket(); guardarDB();
+}
+
+function ponerEnVenta(){
+  let sel=document.getElementById('sellItem'); let index=sel.value;
+  let precio=parseInt(document.getElementById('sellPrice').value);
+  if(isNaN(precio)||precio<=0){alert("Precio inválido"); return;}
+  let obj=db[userActual].objetos.splice(index,1)[0];
+  ventas.push({vendedor:userActual,nombre:obj.nombre,precio:precio,objeto:obj});
+  actualizarInventario(); actualizarMarket(); alert("Objeto puesto a la venta");
+}
+
+function actualizarMarket(){
+  let lista=document.getElementById('listaVentas'); lista.innerHTML="";
+  ventas.forEach((v,i)=>{
+    let d=document.createElement('div');
+    d.innerHTML=v.nombre+" ("+v.objeto.rango+") - "+v.precio+" CC "+(v.vendedor!==userActual? "<button onclick='comprar("+i+")'>Comprar</button>":"[Tu objeto]");
+    lista.appendChild(d);
+  });
+}
+
+function comprar(i){
+  let v=ventas[i];
+  if(db[userActual].coins<v.precio){alert("No tienes suficientes CarriCoins"); return;}
+  db[userActual].coins-=v.precio; db[v.vendedor].coins+=v.precio;
+  db[userActual].objetos.push(v.objeto);
+  db[v.vendedor].historial.push({vendido:v.nombre,precio:v.precio});
+  ventas.splice(i,1);
+  actualizarCoins(); actualizarInventario(); actualizarMarket(); alert("Compra exitosa");
+}
+
+function actualizarHistorial(){
+  let h=document.getElementById('histLista'); h.innerHTML="";
+  db[userActual].historial.forEach(tr=>{let d=document.createElement('div'); d.innerText="Vendiste "+tr.vendido+" por "+tr.precio+" CC"; h.appendChild(d);});
+}
+
+function mostrarListaObjetos(){
+  let lista=document.getElementById('listaObjetos'); lista.innerHTML="";
+  objetosRangos.forEach(o=>{let d=document.createElement('div'); d.innerText=o.nombre+" ("+o.rango+")"; lista.appendChild(d);});
+}
+
+// Movimiento player
+function mover(x){let pos=parseInt(player.style.left); if(isNaN(pos)) pos=130; pos+=x; if(pos<0) pos=0; if(pos>260) pos=260; player.style.left=pos+"px";}
+
+// Minijuego
+function reiniciarCubos(){
+  db[userActual].coins += puntos; actualizarCoins();
+  puntos=0; document.getElementById('score').innerText="Puntos: 0";
+  cubosActivos.forEach(c=>c.remove()); cubosActivos=[];
+  clearInterval(intervalo); if(!juegoPausado) iniciarCubos();
+}
+
+function iniciarCubos(){
+  clearInterval(intervalo);
+  intervalo=setInterval(()=>{
+    if(Math.random()<0.02){
+      let cubo=document.createElement('div'); cubo.className="cubo"; cubo.style.left=Math.floor(Math.random()*260)+"px"; cubo.style.top="0px";
+      document.getElementById('juegoArea').appendChild(cubo); cubosActivos.push(cubo);
+    }
+    cubosActivos.forEach((c,i)=>{
+      let top=parseInt(c.style.top); c.style.top=(top+2)+"px";
+      let pL=parseInt(player.style.left), pR=pL+40, pT=340, pB=380, cL=parseInt(c.style.left), cR=cL+40, cT=parseInt(c.style.top), cB=cT+40;
+      if(!(pR<cL||pL>cR||pB<cT||pT>cB)){
+        db[userActual].coins += puntos; actualizarCoins();
+        alert("Te chocaste! Ganaste "+puntos+" CarriCoins");
+        reiniciarCubos();
+      }
+      if(cT>400){c.remove(); cubosActivos.splice(i,1); puntos++; document.getElementById('score').innerText="Puntos: "+puntos;}
+    });
+  },20);
+}
+
+// Botón pausa/reanuda
+document.getElementById('pauseBtn').addEventListener('click', ()=>{
+  if(!juegoPausado){
+    clearInterval(intervalo);
+    juegoPausado=true;
+    alert("Juego pausado ⏹️");
+  } else {
+    iniciarCubos();
+    juegoPausado=false;
+    alert("Juego reanudado ▶️");
+  }
+});
+
+// Obtener objeto con mutaciones
+function obtenerObjetoAleatorio() {
+  let rangosProb=[{rango:"Común",prob:30},{rango:"Raro",prob:20},{rango:"Épico",prob:15},{rango:"Legendario",prob:10},{rango:"UltraLegendario",prob:7},{rango:"OP",prob:5},{rango:"Dioses",prob:3},{rango:"Gama",prob:2},{rango:"Tenta",prob:2},{rango:"Xero",prob:2},{rango:"Tux",prob:2}];
+  let rand=Math.random()*100, acum=0, rangoSel="Común";
+  for(let i=0;i<rangosProb.length;i++){acum+=rangosProb[i].prob;if(rand<=acum){rangoSel=rangosProb[i].rango;break;}}
+  let objs=objetosRangos.filter(o=>o.rango===rangoSel);
+  let obj=objs[Math.floor(Math.random()*objs.length)];
+  let mutaciones=["","CH","GH","TH","RH","HH"], mutProb=[50,20,15,10,4,1], r=Math.random()*100, acumM=0, mut="";
+  for(let i=0;i<mutaciones.length;i++){acumM+=mutProb[i];if(r<=acumM){mut=mutaciones[i];break;}}
+  if(mut) obj.nombre+=" ("+mut+")";
+  return obj;
+}
+
+// Regalo 500 toques
+let btnRegalo=document.getElementById('tocarRegalo');
+btnRegalo.addEventListener('click',()=>{
+  toques++; document.getElementById('toques').innerText=toques+" / 500";
+  if(toques>=500){
+    let obj=obtenerObjetoAleatorio(); db[userActual].objetos.push(obj); actualizarInventario();
+    alert("¡Recibiste un objeto del regalo!: "+obj.nombre);
+    toques=0; document.getElementById('toques').innerText=toques+" / 500";
+  }
+});
+
+// Tickets ruleta
+function comprarTicket(cant){
+  let precio=cant==1?100:900;
+  if(db[userActual].coins<precio){alert("No tienes CarriCoins"); return;}
+  db[userActual].coins-=precio; db[userActual].tickets+=cant;
+  document.getElementById('ticketCount').innerText=db[userActual].tickets; actualizarCoins(); guardarDB();
+}
+
+function usarTicket(){
+  if(db[userActual].tickets<1){alert("No tienes tickets"); return;}
+  db[userActual].tickets--; document.getElementById('ticketCount').innerText=db[userActual].tickets;
+  let obj=obtenerObjetoAleatorio(); db[userActual].objetos.push(obj); actualizarInventario();
+  alert("¡Ganaste en la ruleta!: "+obj.nombre);
+}
+
+// Recompensa al iniciar sesión
+function recompensaLogin(){
+  let prob=Math.random()*100;
+  if(prob<50){
+    let obj=obtenerObjetoAleatorio(); db[userActual].objetos.push(obj);
+    actualizarInventario();
+    alert("Recompensa de inicio de sesión: "+obj.nombre);
+  }
+}
+</script>
+
+</body>
+</html>
