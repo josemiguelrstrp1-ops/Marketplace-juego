@@ -7,15 +7,15 @@
 <style>
   body{font-family:Arial,Helvetica,sans-serif;background:#f2f2f2;margin:0;padding:0;color:#111;text-align:center}
   .pantalla{display:none;padding:16px}
-  button{padding:10px 12px;margin:6px;font-size:16px;cursor:pointer}
+  button{padding:8px 10px;margin:6px;font-size:15px;cursor:pointer}
   #topCoins{font-size:20px;display:none;margin:10px 0}
-  #juegoArea{width:90vw;max-width:420px;height:60vh;background:#222;margin:10px auto;position:relative;overflow:hidden;border-radius:8px}
+  #juegoArea{width:90vw;max-width:420px;height:52vh;background:#222;margin:10px auto;position:relative;overflow:hidden;border-radius:8px}
   #player{width:10%;min-width:30px;height:10%;min-height:30px;background:#0f0;position:absolute;bottom:6%;left:45%}
   .cubo{width:10%;min-width:30px;height:10%;min-height:30px;background:red;position:absolute;top:0}
   #chatMensajes{height:220px;overflow:auto;border:1px solid #000;background:#fff;padding:6px;text-align:left;margin:8px 0}
   #invLista div,#objLista div,#histLista div,#listaVentas div,#chatMensajes div{margin:6px;padding:6px;border:1px solid #000;background:#fff}
   .botonesMovimiento button{width:30vw;max-width:140px;height:44px;font-size:20px;margin:6px}
-  input,select{font-size:16px;padding:6px;margin:6px}
+  input,select{font-size:15px;padding:6px;margin:6px}
   .row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
 </style>
 </head>
@@ -134,121 +134,142 @@
   <div id="topDinero"></div>
 </div>
 
-<!-- =================== SCRIPT PRINCIPAL (TU LÓGICA) =================== -->
+<!-- ================= SCRIPT PRINCIPAL (LÓGICA + OBJETOS + PLACEHOLDERS) ================= -->
 <script>
-/* Variables locales (se usan como cache/backup). Con Firebase sincronizaremos todo. */
-let localDB = {}; // NO confundir con Firebase
+/* Local cache (se usa como respaldo, la versión real es en Firebase). */
+let cache = {}; // local cache
 let userActual = null;
 let puntos = 0;
 let cubosActivos = [];
 let intervalo = null;
 let juegoPausado = false;
 let toques = 0;
-let ventasLocal = []; // no obligatorio, usamos Firebase
+let ventasLocal = [];
 let player = document.getElementById('player');
 let chatMensajes = [];
 
-/* Objetos (lista que usaremos para sacar aleatorios) */
-let objetosRangos = [
-  {nombre:"🦧 Goriloco-Bananín",rango:"Común"},{nombre:"🐸 PepeSaltarin",rango:"Común"},{nombre:"🐔 PolloNoob",rango:"Común"},
-  {nombre:"🐢 TortuSpeed",rango:"Común"},{nombre:"🐍 SnekGamer",rango:"Común"},{nombre:"🐁 RatónFail",rango:"Común"},{nombre:"🐙 PulpoBrainrot",rango:"Común"},
-  {nombre:"🐲 DragónThug",rango:"Raro"},{nombre:"🦍 MonoBruh",rango:"Raro"},{nombre:"🦖 T-RexEpicFail",rango:"Raro"},{nombre:"🦁 LeónMood",rango:"Raro"},
-  {nombre:"🦊 ZorroCringe",rango:"Raro"},{nombre:"🐧 PenguinoXD",rango:"Raro"},{nombre:"🐵 MonoChad",rango:"Raro"},
-  {nombre:"🐙 PulpoOver9000",rango:"Épico"},{nombre:"🦄 UnicórnitoLOL",rango:"Épico"},{nombre:"🐺 LoboSus",rango:"Épico"},{nombre:"🐉 DragónYeet",rango:"Épico"},
-  {nombre:"🦌 RenoBruhMoment",rango:"Épico"},{nombre:"🐴 CaballoCringe",rango:"Épico"},{nombre:"🦀 CrabbyMad",rango:"Épico"},
-  {nombre:"👑 ReyCarritoSus",rango:"Legendario"},{nombre:"🐉 DragonCarroYeet",rango:"Legendario"},{nombre:"🦄 UnicórnitoBruh",rango:"Legendario"},
-  {nombre:"🦖 T-RexChad",rango:"Legendario"},{nombre:"🐲 DragónEpicFail",rango:"Legendario"},{nombre:"🐉 FénixLOL",rango:"Legendario"},{nombre:"🐉 HydraSus",rango:"Legendario"},
-  {nombre:"🐲 DragónFinalYeet",rango:"UltraLegendario"},{nombre:"🐉 FénixCarroLOL",rango:"UltraLegendario"},{nombre:"🐉 HydraUltraBruh",rango:"UltraLegendario"},{nombre:"👑 CarritoSupremoEpic",rango:"UltraLegendario"},
-  {nombre:"🦄 UnicórnitoOP",rango:"UltraLegendario"},{nombre:"👹 MemeDios",rango:"Dioses"}
+/* ---- LISTA DE OBJETOS SEGÚN TU REGLA ----
+   - Tenta, Xero, Gama, Tux: 5 items cada uno
+   - Resto (Común .. Dioses): 7 items cada uno
+*/
+const objetosPorRango = {
+  "Común": [
+    "🦧 Goriloco-Bananín","🐸 PepeSaltarin","🐔 PolloNoob","🐢 TortuSpeed","🐍 SnekGamer","🐁 RatónFail","🐙 PulpoBrainrot"
+  ],
+  "Raro": [
+    "🐲 DragónThug","🦍 MonoBruh","🦖 T-RexEpicFail","🦁 LeónMood","🦊 ZorroCringe","🐧 PenguinoXD","🐵 MonoChad"
+  ],
+  "Épico": [
+    "🐙 PulpoOver9000","🦄 UnicórnitoLOL","🐺 LoboSus","🐉 DragónYeet","🦌 RenoBruhMoment","🐴 CaballoCringe","🦀 CrabbyMad"
+  ],
+  "Legendario": [
+    "👑 ReyCarritoSus","🐉 DragonCarroYeet","🦄 UnicórnitoBruh","🦖 T-RexChad","🐲 DragónEpicFail","🐉 FénixLOL","🐉 HydraSus"
+  ],
+  "UltraLegendario": [
+    "🐲 DragónFinalYeet","🐉 FénixCarroLOL","🐉 HydraUltraBruh","👑 CarritoSupremoEpic","🦄 UnicórnitoOP","🐉 NovaSus","🐉 AstroDios"
+  ],
+  "OP": [
+    "⚡ OP-GigaCarro","💥 OP-Smash","🔥 OP-Destructor","⚔️ OP-Breaker","🌪 OP-Storm","🔱 OP-Titan","🛡 OP-Guardian"
+  ],
+  "Dioses": [
+    "👹 MemeDios","👑 CarroDios","🌟 SupremoCarro","⚡ UltraMeme","🔥 DivinoCarrito","🌀 CaosDios","☯️ EquilibrioDios"
+  ],
+  // raras especiales: solo 5 cada una
+  "Gama": ["Gama-1","Gama-2","Gama-3","Gama-4","Gama-5"],
+  "Tenta": ["Tenta-1","Tenta-2","Tenta-3","Tenta-4","Tenta-5"],
+  "Xero": ["Xero-1","Xero-2","Xero-3","Xero-4","Xero-5"],
+  "Tux": ["Tux-1","Tux-2","Tux-3","Tux-4","Tux-5"]
+};
+
+/* Mutaciones y probabilidades (mutaciones raras)
+   "" = sin mutación (común)
+   CH GH TH RH HH = muy raras
+*/
+const mutaciones = [
+  {code:"", prob:85},
+  {code:"CH", prob:7},
+  {code:"GH", prob:4},
+  {code:"TH", prob:2},
+  {code:"RH", prob:1.5},
+  {code:"HH", prob:0.5}
 ];
 
-/* ----- FUNCIONES UI y HELPERS ----- */
+/* Raridades y probabilidades base (ajusta si quieres) */
+const rangosProb = [
+  {rango:"Común", prob:30},
+  {rango:"Raro", prob:20},
+  {rango:"Épico", prob:15},
+  {rango:"Legendario", prob:10},
+  {rango:"UltraLegendario", prob:7},
+  {rango:"OP", prob:6},
+  {rango:"Dioses", prob:4},
+  {rango:"Gama", prob:3},
+  {rango:"Tenta", prob:2},
+  {rango:"Xero", prob:2},
+  {rango:"Tux", prob:1}
+];
+
+/* Escoge rango según prob */
+function seleccionarRango(){
+  const r = Math.random()*100;
+  let acum=0;
+  for(let i=0;i<rangosProb.length;i++){
+    acum += rangosProb[i].prob;
+    if(r<=acum) return rangosProb[i].rango;
+  }
+  return "Común";
+}
+
+/* Escoge mutación con probabilidades */
+function seleccionarMutacion(){
+  const r = Math.random()*100;
+  let acum=0;
+  for(let i=0;i<mutaciones.length;i++){
+    acum += mutaciones[i].prob;
+    if(r<=acum) return mutaciones[i].code;
+  }
+  return "";
+}
+
+/* Obtener objeto aleatorio teniendo en cuenta mutaciones (mut reduce prob de aparecer ya por el prob set) */
+function obtenerObjetoAleatorio(){
+  const rango = seleccionarRango();
+  const lista = objetosPorRango[rango] || objetosPorRango["Común"];
+  const nombreBase = lista[Math.floor(Math.random()*lista.length)];
+  const mut = seleccionarMutacion();
+  const nombreFinal = mut ? `${nombreBase} (${mut})` : nombreBase;
+  return { nombre: nombreFinal, rango: rango };
+}
+
+/* ===== UI helpers (misma estructura que antes) ===== */
+function guardarLocal(){
+  localStorage.setItem("cache", JSON.stringify(cache));
+  if(userActual) localStorage.setItem("userActual", userActual);
+}
 function mostrar(id){
   document.querySelectorAll('.pantalla').forEach(p=>p.style.display='none');
   document.getElementById(id).style.display='block';
   if(id==="objLista") mostrarListaObjetos();
-  actualizarJugadoresUI();
+  actualizarJugadoresUI(); // actualizar lista visible
 }
 function volverMenu(){mostrar('menu');}
 function actualizarTopCoinsUI(coins){ document.getElementById('topCoins').innerText="CarriCoins: "+coins; document.getElementById('topCoins').style.display='block'; }
 
-/* ----- FUNCIONES DEL JUEGO (idénticas a lo que ya tenías) ----- */
-function crearCuenta(){
-  let user=document.getElementById('user').value.trim();
-  let pass=document.getElementById('pass').value.trim();
-  if(!user||!pass){alert("Usuario y contraseña requeridos"); return;}
-  // crear en Firebase (ver seccion firebase abajo)
-  crearUsuarioFirebase(user,pass);
-}
-
-function entrar(){
-  let user=document.getElementById('user').value.trim();
-  let pass=document.getElementById('pass').value.trim();
-  if(!user||!pass){alert("Ingresa usuario y contraseña"); return;}
-  loginFirebase(user,pass);
-}
-
-function actualizarInventarioUI(items){
-  let inv=document.getElementById('invLista'); inv.innerHTML="";
-  items.forEach(o=>{ let d=document.createElement('div'); d.innerText=o.nombre+" ("+o.rango+")"; inv.appendChild(d); });
-  let sell=document.getElementById('sellItem'); sell.innerHTML="";
-  items.forEach((o,i)=>{ let option=document.createElement('option'); option.value=i; option.text=o.nombre+" ("+o.rango+")"; sell.appendChild(option);});
-}
-
-function ponerEnVenta(){
-  let sel=document.getElementById('sellItem'); let index=sel.value;
-  let precio=parseInt(document.getElementById('sellPrice').value);
-  if(isNaN(precio)||precio<=0){alert("Precio inválido"); return;}
-  ponerVentaFirebase(index,precio);
-}
-
-function actualizarMarketUI(listado){
-  let lista=document.getElementById('listaVentas'); lista.innerHTML="";
-  listado.forEach(v=>{
-    let d=document.createElement('div');
-    let accion = (v.vendedor!==userActual) ? `<button onclick='comprarFirebase("${v.key}")'>Comprar</button>` : "[Tu objeto]";
-    d.innerHTML = `${v.nombre} (${v.rango}) - ${v.precio} CC - ${v.vendedor} ${accion}`;
-    lista.appendChild(d);
-  });
-}
-
-function comprarFirebase(key){
-  comprarVentaFirebase(key);
-}
-
-function actualizarHistorialUI(hist){
-  let h=document.getElementById('histLista'); h.innerHTML="";
-  hist.forEach(tr=>{ let d=document.createElement('div'); d.innerText=`Vendiste ${tr.vendido} por ${tr.precio} CC`; h.appendChild(d);});
-}
-
-function mostrarListaObjetos(){
-  let lista=document.getElementById('listaObjetos'); lista.innerHTML="";
-  objetosRangos.forEach(o=>{ let d=document.createElement('div'); d.innerText=o.nombre+" ("+o.rango+")"; lista.appendChild(d); });
-}
-
-/* Movimiento player */
-function mover(x){ let posPercent = parseFloat(player.style.left)||45; posPercent+=x; if(posPercent<0) posPercent=0; if(posPercent>80) posPercent=80; player.style.left=posPercent+"%"; }
-
-/* Minijuego */
+/* ====== Juego: mover, iniciar cubos, reiniciar ====== */
+function mover(x){ let pos = parseFloat(player.style.left)||45; pos+=x; if(pos<0) pos=0; if(pos>80) pos=80; player.style.left=pos+"%"; }
+function limpiarCubos(){ cubosActivos.forEach(c=>c.remove()); cubosActivos=[]; clearInterval(intervalo); }
 function reiniciarCubos(){ 
-  if(!userActual){ alert("Debes iniciar sesión para guardar CarriCoins"); puntos=0; document.getElementById('score').innerText="Puntos: 0"; limpiarCubos(); return; }
-  // guardar puntos en cuenta (sumar coins)
-  sumarCoinsFirebase(puntos);
+  if(userActual) sumarCoinsFirebase(puntos);
   puntos=0; document.getElementById('score').innerText="Puntos: 0"; limpiarCubos(); if(!juegoPausado) iniciarCubos();
 }
-function limpiarCubos(){ cubosActivos.forEach(c=>c.remove()); cubosActivos=[]; clearInterval(intervalo); }
 function iniciarCubos(){
   clearInterval(intervalo);
   intervalo=setInterval(()=>{
-    if(Math.random()<0.02){
-      let cubo=document.createElement('div'); cubo.className='cubo'; cubo.style.left=Math.random()*80+'%'; cubo.style.top='0%';
-      document.getElementById('juegoArea').appendChild(cubo); cubosActivos.push(cubo);
-    }
+    if(Math.random()<0.03){ let cubo=document.createElement('div'); cubo.className='cubo'; cubo.style.left=Math.random()*80+'%'; cubo.style.top='0%'; document.getElementById('juegoArea').appendChild(cubo); cubosActivos.push(cubo); }
     cubosActivos.forEach((c,i)=>{
-      let top=parseFloat(c.style.top); c.style.top=(top+0.5)+'%';
+      let top=parseFloat(c.style.top); c.style.top=(top+0.6)+'%';
       let pL=parseFloat(player.style.left), pR=pL+10, pT=90, pB=100, cL=parseFloat(c.style.left), cR=cL+10, cT=parseFloat(c.style.top), cB=cT+10;
       if(!(pR<cL||pL>cR||pB<cT||pT>cB)){
-        // choque
         if(userActual) sumarCoinsFirebase(puntos);
         alert("Te chocaste! Ganaste "+puntos+" CarriCoins");
         reiniciarCubos();
@@ -257,507 +278,213 @@ function iniciarCubos(){
     });
   },20);
 }
-
-/* Pausa */
 document.getElementById('pauseBtn').addEventListener('click', ()=>{
   if(!juegoPausado){ clearInterval(intervalo); juegoPausado=true; alert("Juego pausado ⏹️"); }
   else{ iniciarCubos(); juegoPausado=false; alert("Juego reanudado ▶️"); }
 });
 
-/* Regalo 500 toques */
-document.getElementById('tocarRegalo').addEventListener('click', ()=>{
-  toques++; document.getElementById('toques').innerText = toques + " / 500";
-  if(toques>=500){
-    if(!userActual){ alert("Inicia sesión para recibir el objeto"); toques=0; document.getElementById('toques').innerText = toques + " / 500"; return; }
-    obtenerObjetoFirebase().then(obj=>{
-      agregarObjetoAUsuarioFirebase(obj);
-      alert("¡Recibiste un objeto del regalo!: "+obj.nombre);
-    });
-    toques=0; document.getElementById('toques').innerText = toques + " / 500";
-  }
-});
-
-/* RULETA y tickets */
-function comprarTicket(cant){
-  if(!userActual){ alert("Inicia sesión para comprar tickets"); return; }
-  let precio = cant==1?100:900;
-  comprarTicketsFirebase(cant,precio);
-}
-function usarTicket(){
-  usarTicketFirebase();
-}
-
-/* Chat local UI (se actualiza desde Firebase) */
-function mostrarChatUI(mensajes){
-  let chatDiv = document.getElementById('chatMensajes'); chatDiv.innerHTML = "";
-  mensajes.forEach(m=>{
-    let d = document.createElement('div');
-    d.innerText = m.usuario + ": " + m.texto;
-    chatDiv.appendChild(d);
-  });
-  chatDiv.scrollTop = chatDiv.scrollHeight;
-}
-
-/* Jugadores y top UI (actualización desde Firebase) */
-function actualizarJugadoresUI(usuarios){
-  let jugadoresDiv=document.getElementById('jugadoresActivos'); jugadoresDiv.innerHTML="";
-  let topDiv=document.getElementById('topDinero'); topDiv.innerHTML="";
-  if(!usuarios) return;
-  let list = Object.keys(usuarios).map(u=>({usuario:u,coins:usuarios[u].coins||0}));
-  list.forEach(item=>{
-    let d=document.createElement('div'); d.innerText = item.usuario; jugadoresDiv.appendChild(d);
-  });
-  list.sort((a,b)=>b.coins-a.coins);
-  list.slice(0,10).forEach(t=>{
-    let d=document.createElement('div'); d.innerText = t.usuario + ": " + t.coins + " CC"; topDiv.appendChild(d);
-  });
-}
-
-/* Reset chat local cada 3 minutos: la versión en Firebase también limpia en servidor (ver abajo) */
-setInterval(()=>{ /* local placeholder */ }, 180000);
-
-/* =================== FIREBASE: configuración y funciones =================== */
-/* REEMPLAZA el firebaseConfig por el tuyo si es necesario. Ya viene con el tuyo. */
-</script>
-
-<!-- =================== FIREBASE (NO DUPLICAR, este bloque VA DESPUES del script anterior) =================== -->
-<script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-database-compat.js"></script>
-
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyADVjuoLhcH34XPmZv-sx-eP71rIxVEKEY",
-    authDomain: "juego-marketplace.firebaseapp.com",
-    databaseURL: "https://juego-marketplace-default-rtdb.firebaseio.com/",
-    projectId: "juego-marketplace",
-    storageBucket: "juego-marketplace.firebasestorage.app",
-    messagingSenderId: "258620166110",
-    appId: "1:258620166110:web:3a101d6f7743b6dbc6574f",
-    measurementId: "G-0GZDE8FNEC"
-  };
-
-  // Inicializar Firebase (compat)
-  firebase.initializeApp(firebaseConfig);
-  const rtdb = firebase.database();
-
-  // Helpers de referencia
-  const refUsuarios = rtdb.ref('usuarios');     // usuarios/{user}
-  const refChat = rtdb.ref('chat');             // chat/{pushId}
-  const refVentas = rtdb.ref('ventas');         // ventas/{pushId}
-
-  /* ---------- ESCUCHAS EN TIEMPO REAL ---------- */
-
-  // 1) Escuchar chat (todos los mensajes)
-  refChat.on('value', snap=>{
-    const obj = snap.val() || {};
-    const arr = Object.keys(obj).map(k=>({key:k, usuario: obj[k].usuario, texto: obj[k].texto, ts: obj[k].ts})).sort((a,b)=>a.ts-b.ts);
-    chatMensajes = arr;
-    mostrarChatUI(arr);
-  });
-
-  // 2) Escuchar ventas (marketplace)
-  refVentas.on('value', snap=>{
-    const obj = snap.val() || {};
-    const arr = Object.keys(obj).map(k=>({key:k, vendedor: obj[k].vendedor, nombre: obj[k].nombre, precio: obj[k].precio, rango: obj[k].rango}));
-    actualizarMarketUI(arr);
-  });
-
-  // 3) Escuchar usuarios para top y jugadores activos
-  refUsuarios.on('value', snap=>{
-    const obj = snap.val() || {};
-    actualizarJugadoresUI(obj);
-  });
-
-  /* ---------- FUNCIONES QUE USAN FIREBASE ---------- */
-
-  // Crear usuario (si no existe) y darle 3 objetos comunes y 50 coins
-  function crearUsuarioFirebase(user, pass){
-    if(!user) return;
-    refUsuarios.child(user).get().then(snap=>{
-      if(snap.exists()){ alert("Usuario ya existe"); return; }
-      // crear y asignar 3 comunes aleatorios
-      const comunes = objetosRangos.filter(o=>o.rango==="Común");
-      let objetos = [];
-      for(let i=0;i<3;i++) objetos.push(comunes[Math.floor(Math.random()*comunes.length)]);
-      const data = { pass: pass, coins: 50, objetos: objetos, historial: [], tickets: 0 };
-      refUsuarios.child(user).set(data).then(()=>{
-        alert("Cuenta creada con 3 objetos comunes y 50 CarriCoins");
-      });
-    });
-  }
-
-  // Login
-  function loginFirebase(user,pass){
-    if(!user) return;
-    refUsuarios.child(user).get().then(snap=>{
-      if(!snap.exists() || snap.val().pass !== pass){ alert("Usuario o contraseña incorrectos"); return; }
-      userActual = user;
-      // cargar UI con lo que haya
-      const data = snap.val();
-      actualizarTopCoinsUI(data.coins||0);
-      actualizarInventarioUI(data.objetos||[]);
-      actualizarHistorialUI(data.historial||[]);
-      document.getElementById('ticketCount').innerText = data.tickets || 0;
-      mostrar('menu');
-      // marcar presencia simple: escribir último ping
-      refUsuarios.child(user).update({ lastSeen: Date.now() });
-    });
-  }
-
-  // Sumar coins al usuario (por puntos del minijuego)
-  function sumarCoinsFirebase(amount){
-    if(!userActual) return;
-    const userRef = refUsuarios.child(userActual);
-    userRef.get().then(snap=>{
-      const cur = (snap.exists() && snap.val().coins) ? snap.val().coins : 0;
-      userRef.update({ coins: cur + (amount||0) }).then(()=>{
-        // refrescar UI
-        refUsuarios.child(userActual).get().then(snap2=>{
-          const d = snap2.val();
-          actualizarTopCoinsUI(d.coins||0);
-        });
-      });
-    });
-  }
-
-  // Poner en venta un objeto (usa el índice del inventario)
-  function ponerVentaFirebase(index, precio){
-    if(!userActual){ alert("Inicia sesión"); return; }
-    refUsuarios.child(userActual).get().then(snap=>{
-      const data = snap.val();
-      if(!data || !data.objetos || !data.objetos[index]){ alert("Objeto inválido"); return; }
-      const obj = data.objetos[index];
-      // eliminar del inventario del usuario
-      data.objetos.splice(index,1);
-      refUsuarios.child(userActual).update({ objetos: data.objetos, historial: data.historial||[] }).then(()=>{
-        // crear venta en nodo ventas
-        const venta = { vendedor: userActual, nombre: obj.nombre, precio: precio, rango: obj.rango };
-        refVentas.push(venta);
-      });
-    });
-  }
-
-  // Comprar venta por key
-  function comprarVentaFirebase(key){
-    if(!userActual){ alert("Inicia sesión"); return; }
-    refVentas.child(key).get().then(snap=>{
-      if(!snap.exists()){ alert("Venta no existe"); return; }
-      const venta = snap.val();
-      if(venta.vendedor === userActual){ alert("No puedes comprar tu propio objeto"); return; }
-      // leer comprador y vendedor balances
-      refUsuarios.child(userActual).get().then(buySnap=>{
-        const buyer = buySnap.val();
-        if((buyer.coins||0) < venta.precio){ alert("No tienes suficientes CarriCoins"); return; }
-        // transferir
-        const newBuyerCoins = (buyer.coins||0) - venta.precio;
-        refUsuarios.child(userActual).update({ coins: newBuyerCoins }).then(()=>{
-          // agregar objeto al comprador
-          refUsuarios.child(userActual).get().then(bSnap2=>{
-            const bdata = bSnap2.val();
-            const arr = bdata.objetos || [];
-            arr.push({ nombre: venta.nombre, rango: venta.rango });
-            refUsuarios.child(userActual).update({ objetos: arr }).then(()=>{
-              // agregar dinero al vendedor y registrar historial
-              refUsuarios.child(venta.vendedor).get().then(snapVend=>{
-                const vendData = snapVend.val() || {};
-             <button onclick="mostrar('market')">Marketplace</button><br>
-<button onclick="mostrar('inventario')">Inventario</button><br>
-<button onclick="mostrar('historial')">Historial de ventas</button><br>
-<button onclick="mostrar('objLista')">Lista de objetos</button><br>
-<button onclick="mostrar('regalo')">Abrir regalo (500 toques)</button><br>
-<button onclick="mostrar('ruleta')">Ruleta de objetos</button><br>
-<button onclick="mostrar('chatPantalla')">Chat Global / Jugadores</button>
-</div>
-
-<div id="juego" class="pantalla">
-<h2>Esquivar cubos</h2>
-<div id="juegoArea">
-<div id="player"></div>
-</div>
-<p id="score">Puntos: 0</p>
-<div class="botonesMovimiento">
-<button onclick="mover(-10)">⬅️</button>
-<button onclick="mover(10)">➡️</button>
-<button id="pauseBtn">⏹️ Pausar/Reanudar</button>
-</div>
-<button onclick="reiniciarCubos()">🔄 Reiniciar Cubos</button><br>
-<button onclick="volverMenu()">Volver al menú</button>
-</div>
-
-<div id="market" class="pantalla">
-<h2>Marketplace</h2>
-<h3>Vender</h3>
-<select id="sellItem"></select><br>
-<input id="sellPrice" placeholder="Precio en CarriCoins"><br>
-<button onclick="ponerEnVenta()">Poner en venta</button>
-<h3>Comprar</h3>
-<div id="listaVentas"></div>
-<button onclick="volverMenu()">Volver</button>
-</div>
-
-<div id="inventario" class="pantalla">
-<h2>Inventario</h2>
-<div id="invLista"></div>
-<button onclick="volverMenu()">Volver</button>
-</div>
-
-<div id="historial" class="pantalla">
-<h2>Historial</h2>
-<div id="histLista"></div>
-<button onclick="volverMenu()">Volver</button>
-</div>
-
-<div id="objLista" class="pantalla">
-<h2>Objetos por rareza</h2>
-<div id="listaObjetos"></div>
-<button onclick="volverMenu()">Volver</button>
-</div>
-
-<div id="regalo" class="pantalla">
-<h2>Regalo</h2>
-<p>Toca 500 veces para recibir un objeto</p>
-<p id="toques">Toques: 0 / 500</p>
-<button id="tocarRegalo">🎁</button>
-<button onclick="volverMenu()">Volver</button>
-</div>
-
-<div id="ruleta" class="pantalla">
-<h2>Ruleta de Objetos</h2>
-<p>Tickets disponibles: <span id="ticketCount">0</span></p>
-<button onclick="comprarTicket(1)">Comprar 1 Ticket (100 CC)</button>
-<button onclick="comprarTicket(10)">Paquete 10 Tickets (900 CC)</button><br>
-<button onclick="usarTicket()">Usar Ticket en Ruleta</button><br>
-<button onclick="volverMenu()">Volver</button>
-</div>
-
-<div id="chatPantalla" class="pantalla">
-<h2>Chat Global</h2>
-<div id="chatMensajes"></div>
-<input id="chatInput" placeholder="Escribe tu mensaje" style="width:70%;">
-<button onclick="enviarMensaje()">Enviar</button><br>
-<button onclick="volverMenu()">Volver</button>
-<h3>Jugadores activos</h3>
-<div id="jugadoresActivos"></div>
-<h3>Top CarriCoins</h3>
-<div id="topDinero"></div>
-</div>
-
-<script>
-// Base de datos
-let db = JSON.parse(localStorage.getItem("db")) || {};
-let userActual = localStorage.getItem("userActual") || null;
-let puntos = 0;
-let cubosActivos = [];
-let intervalo = null;
-let juegoPausado = false;
-let toques = 0;
-let ventas = [];
-let player = document.getElementById('player');
-let chatMensajes = [];
-
-// Objetos
-let objetosRangos = [
-{nombre:"🦧 Goriloco-Bananín",rango:"Común"},{nombre:"🐸 PepeSaltarin",rango:"Común"},{nombre:"🐔 PolloNoob",rango:"Común"},{nombre:"🐢 TortuSpeed",rango:"Común"},{nombre:"🐍 SnekGamer",rango:"Común"},
-{nombre:"🐁 RatónFail",rango:"Común"},{nombre:"🐙 PulpoBrainrot",rango:"Común"},{nombre:"🐲 DragónThug",rango:"Raro"},{nombre:"🦍 MonoBruh",rango:"Raro"},{nombre:"🦖 T-RexEpicFail",rango:"Raro"},
-{nombre:"🦁 LeónMood",rango:"Raro"},{nombre:"🦊 ZorroCringe",rango:"Raro"},{nombre:"🐧 PenguinoXD",rango:"Raro"},{nombre:"🐵 MonoChad",rango:"Raro"},
-{nombre:"🐙 PulpoOver9000",rango:"Épico"},{nombre:"🦄 UnicórnitoLOL",rango:"Épico"},{nombre:"🐺 LoboSus",rango:"Épico"},{nombre:"🐉 DragónYeet",rango:"Épico"},{nombre:"🦌 RenoBruhMoment",rango:"Épico"},{nombre:"🐴 CaballoCringe",rango:"Épico"},{nombre:"🦀 CrabbyMad",rango:"Épico"},
-{nombre:"👑 ReyCarritoSus",rango:"Legendario"},{nombre:"🐉 DragonCarroYeet",rango:"Legendario"},{nombre:"🦄 UnicórnitoBruh",rango:"Legendario"},{nombre:"🦖 T-RexChad",rango:"Legendario"},{nombre:"🐲 DragónEpicFail",rango:"Legendario"},{nombre:"🐉 FénixLOL",rango:"Legendario"},{nombre:"🐉 HydraSus",rango:"Legendario"},
-{nombre:"🐲 DragónFinalYeet",rango:"UltraLegendario"},{nombre:"🐉 FénixCarroLOL",rango:"UltraLegendario"},{nombre:"🐉 HydraUltraBruh",rango:"UltraLegendario"},{nombre:"👑 CarritoSupremoEpic",rango:"UltraLegendario"},{nombre:"🦄 UnicórnitoOP",rango:"UltraLegendario"},{nombre:"👹 MemeDios",rango:"Dioses"}];
-
-// Funciones generales
-function guardarDB(){localStorage.setItem("db", JSON.stringify(db)); localStorage.setItem("userActual", userActual);}
-function mostrar(id){document.querySelectorAll('.pantalla').forEach(p=>p.style.display='none'); document.getElementById(id).style.display='block'; if(id==="objLista") mostrarListaObjetos(); actualizarJugadores();}
-function volverMenu(){mostrar('menu');}
-function actualizarCoins(){if(userActual) document.getElementById('topCoins').innerText="CarriCoins: "+db[userActual].coins; document.getElementById('topCoins').style.display='block';}
-
-// Crear cuenta con 3 objetos comunes
-function crearCuenta(){
-  let user=document.getElementById('user').value;
-  let pass=document.getElementById('pass').value;
-  if(!user||!pass){alert("Usuario y contraseña requeridos"); return;}
-  if(db[user]){alert("Usuario ya existe"); return;}
-  db[user]={pass:pass,coins:50,objetos:[],historial:[],tickets:0};
-  let comunes = objetosRangos.filter(o=>o.rango==="Común");
-  for(let i=0;i<3;i++){ db[user].objetos.push(comunes[Math.floor(Math.random()*comunes.length)]); }
-  guardarDB();
-  alert("Cuenta creada con 3 objetos comunes y 50 CarriCoins");
-}
-
-// Entrar
-function entrar(){
-  let user=document.getElementById('user').value;
-  let pass=document.getElementById('pass').value;
-  if(!db[user]||db[user].pass!==pass){alert("Usuario o contraseña incorrectos"); return;}
-  userActual=user; actualizarCoins(); actualizarInventario(); actualizarHistorial(); document.getElementById('ticketCount').innerText=db[userActual].tickets; guardarDB(); mostrar('menu');
-}
-
-// Inventario
-function actualizarInventario(){
-  let inv=document.getElementById('invLista'); inv.innerHTML="";
-  db[userActual].objetos.forEach((o,i)=>{let d=document.createElement('div'); d.innerText=o.nombre+" ("+o.rango+")"; inv.appendChild(d);});
-  let sell=document.getElementById('sellItem'); sell.innerHTML="";
-  db[userActual].objetos.forEach((o,i)=>{let option=document.createElement('option'); option.value=i; option.text=o.nombre+" ("+o.rango+")"; sell.appendChild(option);});
-  actualizarMarket(); guardarDB();
-}
-
-function ponerEnVenta(){
-  let sel=document.getElementById('sellItem'); let index=sel.value;
-  let precio=parseInt(document.getElementById('sellPrice').value);
-  if(isNaN(precio)||precio<=0){alert("Precio inválido"); return;}
-  let obj=db[userActual].objetos.splice(index,1)[0];
-  ventas.push({vendedor:userActual,nombre:obj.nombre,precio:precio,objeto:obj});
-  actualizarInventario(); actualizarMarket(); alert("Objeto puesto a la venta");
-}
-
-function actualizarMarket(){
-  let lista=document.getElementById('listaVentas'); lista.innerHTML="";
-  ventas.forEach((v,i)=>{
-    let d=document.createElement('div');
-    d.innerHTML=v.nombre+" ("+v.objeto.rango+") - "+v.precio+" CC "+(v.vendedor!==userActual? "<button onclick='comprar("+i+")'>Comprar</button>":"[Tu objeto]");
-    lista.appendChild(d);
-  });
-}
-
-function comprar(i){
-  let v=ventas[i];
-  if(db[userActual].coins<v.precio){alert("No tienes suficientes CarriCoins"); return;}
-  db[userActual].coins-=v.precio; db[v.vendedor].coins+=v.precio;
-  db[userActual].objetos.push(v.objeto);
-  db[v.vendedor].historial.push({vendido:v.nombre,precio:v.precio});
-  ventas.splice(i,1);
-  actualizarCoins(); actualizarInventario(); actualizarMarket(); alert("Compra exitosa");
-}
-
-function actualizarHistorial(){
-  let h=document.getElementById('histLista'); h.innerHTML="";
-  db[userActual].historial.forEach(tr=>{let d=document.createElement('div'); d.innerText="Vendiste "+tr.vendido+" por "+tr.precio+" CC"; h.appendChild(d);});
-}
-
-function mostrarListaObjetos(){
-  let lista=document.getElementById('listaObjetos'); lista.innerHTML="";
-  objetosRangos.forEach(o=>{let d=document.createElement('div'); d.innerText=o.nombre+" ("+o.rango+")"; lista.appendChild(d);});
-}
-
-// Movimiento player
-function mover(x){let pos=parseFloat(player.style.left)||45; pos+=x; if(pos<0) pos=0; if(pos>80) pos=80; player.style.left=pos+"%";}
-
-// Minijuego y reinicio de cubos
-function reiniciarCubos(){ db[userActual].coins += puntos; actualizarCoins(); puntos=0; document.getElementById('score').innerText="Puntos: 0"; cubosActivos.forEach(c=>c.remove()); cubosActivos=[]; clearInterval(intervalo); if(!juegoPausado) iniciarCubos();}
-function iniciarCubos(){
-  clearInterval(intervalo);
-  intervalo=setInterval(()=>{
-    if(Math.random()<0.02){
-      let cubo=document.createElement('div'); cubo.className="cubo"; cubo.style.left=Math.random()*80+"%"; cubo.style.top="0%";
-      document.getElementById('juegoArea').appendChild(cubo); cubosActivos.push(cubo);
-    }
-    cubosActivos.forEach((c,i)=>{
-      let top=parseFloat(c.style.top); c.style.top=(top+0.5)+"%";
-      let pL=parseFloat(player.style.left), pR=pL+10, pT=90, pB=100, cL=parseFloat(c.style.left), cR=cL+10, cT=parseFloat(c.style.top), cB=cT+10;
-      if(!(pR<cL||pL>cR||pB<cT||pT>cB)){
-        db[userActual].coins += puntos; actualizarCoins();
-        alert("Te chocaste! Ganaste "+puntos+" CarriCoins");
-        reiniciarCubos();
-      }
-      if(cT>100){c.remove(); cubosActivos.splice(i,1); puntos++; document.getElementById('score').innerText="Puntos: "+puntos;}
-    });
-  },20);
-}
-
-// Botón pausa/reanuda
-document.getElementById('pauseBtn').addEventListener('click', ()=>{
-  if(!juegoPausado){ clearInterval(intervalo); juegoPausado=true; alert("Juego pausado ⏹️"); }
-  else { iniciarCubos(); juegoPausado=false; alert("Juego reanudado ▶️"); }
-});
-
-// Regalo 500 toques
+/* ====== regalo 500 toques ====== */
 document.getElementById('tocarRegalo').addEventListener('click',()=>{
   toques++; document.getElementById('toques').innerText=toques+" / 500";
   if(toques>=500){
-    let obj=objetosRangos[Math.floor(Math.random()*objetosRangos.length)];
-    db[userActual].objetos.push(obj); actualizarInventario();
+    if(!userActual){ alert("Inicia sesión para recibir el objeto"); toques=0; document.getElementById('toques').innerText=toques+" / 500"; return; }
+    const obj = obtenerObjetoAleatorio();
+    agregarObjetoAUsuarioFirebase(obj);
     alert("¡Recibiste un objeto del regalo!: "+obj.nombre);
     toques=0; document.getElementById('toques').innerText=toques+" / 500";
   }
 });
 
-// Tickets ruleta
-function comprarTicket(cant){ let precio=cant==1?100:900; if(db[userActual].coins<precio){alert("No tienes CarriCoins"); return;} db[userActual].coins-=precio; db[userActual].tickets+=cant; document.getElementById('ticketCount').innerText=db[userActual].tickets; actualizarCoins(); guardarDB();}
-function usarTicket(){ if(db[userActual].tickets<1){alert("No tienes tickets"); return;} db[userActual].tickets--; document.getElementById('ticketCount').innerText=db[userActual].tickets; let obj=objetosRangos[Math.floor(Math.random()*objetosRangos.length)]; db[userActual].objetos.push(obj); actualizarInventario(); alert("¡Ganaste en la ruleta!: "+obj.nombre);}
+/* ====== RULETA ====== */
+function comprarTicket(cant){ if(!userActual){ alert("Inicia sesión"); return; } const precio = cant==1?100:900; comprarTicketsFirebase(cant,precio); }
+function usarTicket(){ usarTicketFirebase(); }
 
-// Chat Global
-function enviarMensaje(){
-  let msg=document.getElementById('chatInput').value.trim();
-  if(msg==="") return;
-  chatMensajes.push(userActual+": "+msg);
-  document.getElementById('chatInput').value="";
-  mostrarChat();
+/* ====== CHAT UI (se actualiza desde Firebase) ====== */
+function mostrarChatUI(arr){ let chatDiv=document.getElementById('chatMensajes'); chatDiv.innerHTML=''; arr.forEach(m=>{ let d=document.createElement('div'); d.innerText = m.usuario + ': ' + m.texto; chatDiv.appendChild(d); }); chatDiv.scrollTop = chatDiv.scrollHeight; }
+
+/* ====== Jugadores y Top UI ====== */
+function actualizarJugadoresUI(usuarios){
+  let jugadoresDiv=document.getElementById('jugadoresActivos'); jugadoresDiv.innerHTML='';
+  let topDiv=document.getElementById('topDinero'); topDiv.innerHTML='';
+  if(!usuarios) return;
+  let list = Object.keys(usuarios).map(u=>({usuario:u,coins:usuarios[u].coins||0}));
+  list.forEach(x=>{ let d=document.createElement('div'); d.innerText = x.usuario; jugadoresDiv.appendChild(d); });
+  list.sort((a,b)=>b.coins-a.coins);
+  list.slice(0,10).forEach(t=>{ let d=document.createElement('div'); d.innerText = t.usuario + ': ' + t.coins + ' CC'; topDiv.appendChild(d); });
 }
 
-function mostrarChat(){
-  let chatDiv=document.getElementById('chatMensajes');
-  chatDiv.innerHTML="";
-  chatMensajes.forEach(m=>{ let d=document.createElement('div'); d.innerText=m; chatDiv.appendChild(d); });
-  chatDiv.scrollTop = chatDiv.scrollHeight;
-}
-
-// Jugadores activos y top dinero
-function actualizarJugadores(){
-  let jugadoresDiv=document.getElementById('jugadoresActivos');
-  jugadoresDiv.innerHTML="";
-  Object.keys(db).forEach(u=>{ let d=document.createElement('div'); d.innerText=u; jugadoresDiv.appendChild(d); });
-  let topDiv=document.getElementById('topDinero');
-  // Top CarriCoins
-  let topJugadores = Object.keys(db).map(u => ({usuario: u, coins: db[u].coins}));
-  topJugadores.sort((a,b) => b.coins - a.coins);
-  topDiv.innerHTML = "";
-  topJugadores.slice(0,10).forEach(t => {
-    let d = document.createElement('div');
-    d.innerText = t.usuario + ": " + t.coins + " CC";
-    topDiv.appendChild(d);
+/* ====== Mostrar lista objetos (UI) ====== */
+function mostrarListaObjetos(){
+  const cont=document.getElementById('listaObjetos'); cont.innerHTML='';
+  Object.keys(objetosPorRango).forEach(r=>{
+    objetosPorRango[r].forEach(n=>{
+      let d=document.createElement('div'); d.innerText = n + ' ('+r+')'; cont.appendChild(d);
+    });
   });
 }
 
-// Actualizar cada 3 minutos el chat y jugadores activos
-setInterval(() => {
-  chatMensajes = []; // Resetea chat cada 3 minutos
-  mostrarChat();
-  actualizarJugadores();
-}, 180000);
-
-  <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-analytics.js";
-  import { getDatabase } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
-
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyADVjuoLhcH34XPmZv-sx-eP71rIxVEKEY",
-    authDomain: "juego-marketplace.firebaseapp.com",
-    projectId: "juego-marketplace",
-    storageBucket: "juego-marketplace.firebasestorage.app",
-    messagingSenderId: "258620166110",
-    appId: "1:258620166110:web:3a101d6f7743b6dbc6574f",
-    measurementId: "G-0GZDE8FNEC",
-    databaseURL: "https://juego-marketplace-default-rtdb.firebaseio.com/"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-  const db = getDatabase(app);
-
-  console.log("🔥 Firebase conectado correctamente");
+/* =================== FIREBASE (compat) =================== */
+/* Usamos compat para mejor compatibilidad en móviles */
 </script>
-// Inicialización si ya hay usuario logueado
-if(userActual) {
-  actualizarCoins();
-  actualizarInventario();
-  actualizarHistorial();
-  document.getElementById('ticketCount').innerText = db[userActual].tickets;
-  mostrar('menu');
+
+<!-- Firebase compat SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-database-compat.js"></script>
+
+<script>
+/* CONFIG: reemplaza si quieres, aquí está tu config actual */
+const firebaseConfig = {
+  apiKey: "AIzaSyADVjuoLhcH34XPmZv-sx-eP71rIxVEKEY",
+  authDomain: "juego-marketplace.firebaseapp.com",
+  databaseURL: "https://juego-marketplace-default-rtdb.firebaseio.com/",
+  projectId: "juego-marketplace",
+  storageBucket: "juego-marketplace.firebasestorage.app",
+  messagingSenderId: "258620166110",
+  appId: "1:258620166110:web:3a101d6f7743b6dbc6574f",
+  measurementId: "G-0GZDE8FNEC"
+};
+
+firebase.initializeApp(firebaseConfig);
+const rtdb = firebase.database();
+const refUsuarios = rtdb.ref('usuarios');
+const refChat = rtdb.ref('chat');
+const refVentas = rtdb.ref('ventas');
+
+console.log("Firebase compat conectado");
+
+/* ---------- LISTENERS EN TIEMPO REAL ---------- */
+
+// Chat
+refChat.on('value', snap=>{
+  const obj = snap.val() || {};
+  const arr = Object.keys(obj).map(k=>({key:k, usuario: obj[k].usuario, texto: obj[k].texto, ts: obj[k].ts})).sort((a,b)=>a.ts-b.ts);
+  chatMensajes = arr;
+  mostrarChatUI(arr);
+});
+
+// Ventas
+refVentas.on('value', snap=>{
+  const obj = snap.val() || {};
+  const arr = Object.keys(obj).map(k=>({key:k, vendedor: obj[k].vendedor, nombre: obj[k].nombre, precio: obj[k].precio, rango: obj[k].rango}));
+  // actualizar UI
+  const lista = document.getElementById('listaVentas'); lista.innerHTML='';
+  arr.forEach(v=>{
+    let d=document.createElement('div');
+    const boton = (v.vendedor!==userActual) ? `<button onclick="comprarVentaFirebase('${v.key || v.key}')">Comprar</button>` : "[Tu objeto]";
+    d.innerHTML = `${v.nombre} (${v.rango}) - ${v.precio} CC - ${v.vendedor} ${v.key ? '' : ''}`;
+    // we attach element and set data-key attribute
+    d.dataset.key = v.key || '';
+    lista.appendChild(d);
+  });
+});
+
+// Usuarios -> top y lista
+refUsuarios.on('value', snap=>{
+  const obj = snap.val() || {};
+  actualizarJugadoresUI(obj);
+  // si estoy logueado, refrescar mi UI
+  if(userActual && obj[userActual]){
+    const me = obj[userActual];
+    actualizarTopCoinsUI(me.coins || 0);
+    // inventario e historial UI
+    const items = me.objetos || [];
+    const hist = me.historial || [];
+    // actualizar inv
+    const invDiv = document.getElementById('invLista'); invDiv.innerHTML='';
+    items.forEach(it=>{ let el=document.createElement('div'); el.innerText = it.nombre+" ("+it.rango+")"; invDiv.appendChild(el); });
+    const hisDiv = document.getElementById('histLista'); hisDiv.innerHTML='';
+    hist.forEach(h=>{ let el=document.createElement('div'); el.innerText = `Vendiste ${h.vendido} por ${h.precio} CC`; hisDiv.appendChild(el); });
+    document.getElementById('ticketCount').innerText = me.tickets || 0;
+  }
+});
+
+/* ---------- FUNCIONES FIREBASE ---------- */
+
+function crearCuentaFirebase(user, pass){
+  refUsuarios.child(user).get().then(snap=>{
+    if(snap.exists()){ alert("Usuario ya existe"); return; }
+    // crear 3 comunes
+    const comunes = objetosPorRango["Común"];
+    let objs = [];
+    for(let i=0;i<3;i++){ const n = comunes[Math.floor(Math.random()*comunes.length)]; objs.push({nombre:n, rango:"Común"}); }
+    const data = { pass: pass, coins: 50, objetos: objs, historial: [], tickets: 0, lastSeen: Date.now() };
+    refUsuarios.child(user).set(data).then(()=>{ alert("Cuenta creada con 3 objetos comunes y 50 CC"); });
+  });
 }
-</script>
-</body>
-</html>
-  
+
+function loginFirebase(user, pass){
+  refUsuarios.child(user).get().then(snap=>{
+    if(!snap.exists() || snap.val().pass !== pass){ alert("Usuario o contraseña incorrectos"); return; }
+    userActual = user;
+    localStorage.setItem('userActual', userActual);
+    // carga UI se hace por el listener de refUsuarios
+    refUsuarios.child(user).update({ lastSeen: Date.now() });
+    mostrar('menu');
+  });
+}
+
+function sumarCoinsFirebase(amount){
+  if(!userActual) return;
+  refUsuarios.child(userActual).get().then(snap=>{
+    const cur = (snap.exists() && snap.val().coins) ? snap.val().coins : 0;
+    refUsuarios.child(userActual).update({ coins: cur + (amount||0) });
+  });
+}
+
+function ponerEnVentaFirebase(index, precio){
+  if(!userActual){ alert("Inicia sesión"); return; }
+  refUsuarios.child(userActual).get().then(snap=>{
+    const data = snap.val();
+    if(!data || !data.objetos || !data.objetos[index]){ alert("Objeto inválido"); return; }
+    const obj = data.objetos[index];
+    // remover del inventario local y subir cambios
+    data.objetos.splice(index,1);
+    refUsuarios.child(userActual).update({ objetos: data.objetos }).then(()=>{
+      // push venta
+      const venta = { vendedor: userActual, nombre: obj.nombre, precio: precio, rango: obj.rango, ts: Date.now() };
+      refVentas.push(venta);
+    });
+  });
+}
+
+function comprarVentaFirebase(key){
+  if(!userActual){ alert("Inicia sesión"); return; }
+  refVentas.child(key).get().then(snap=>{
+    if(!snap.exists()){ alert("Venta no existe"); return; }
+    const venta = snap.val();
+    if(venta.vendedor === userActual){ alert("No puedes comprar tu propio objeto"); return; }
+    refUsuarios.child(userActual).get().then(buySnap=>{
+      const buyer = buySnap.val();
+      if((buyer.coins||0) < venta.precio){ alert("No tienes suficientes CC"); return; }
+      // restar al comprador
+      const newBuyerCoins = (buyer.coins||0) - venta.precio;
+      refUsuarios.child(userActual).update({ coins: newBuyerCoins }).then(()=>{
+        // agregar objeto al comprador
+        refUsuarios.child(userActual).child('objetos').get().then(objSnap=>{
+          const arr = objSnap.exists() ? objSnap.val() : [];
+          arr.push({ nombre: venta.nombre, rango: venta.rango });
+          refUsuarios.child(userActual).update({ objetos: arr }).then(()=>{
+            // dar dinero al vendedor y registrar historial
+            refUsuarios.child(venta.vendedor).get().then(vsnap=>{
+              const vendData = vsnap.val() || {};
+              const vendCoins = (vendData.coins||0) + venta.precio;
+              const vendHist = vendData.historial || [];
+              vendHist.push({ vendido: venta.nombre, precio: venta.precio, cuando: Date.now() });
+              refUsuarios.child(venta.vendedor).update({ coins: vendCoins, historial: vendHist }).then(()=>{
+                // eliminar venta
+                refVentas.child(key).remove();
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+}
+
+function obtenerObjetoAleatorioFirebase(){
+  // wrapper para compatibilidad
+  const rango = (function(){
+    const r = Math.random()*100; let acum=0;
+    for(let i=0;i<rangosProb.length;i++){ acum+=rangosProb[i].prob; if(r<=acum) return rangosProb[i].rango; }
+    return "Común"
