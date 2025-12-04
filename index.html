@@ -1,615 +1,300 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Marketplace Juego - Online</title>
+<meta charset="UTF-8">
+<title>Marketplace Game</title>
 <style>
-  :root{--bg:#f5f7fa;--card:#fff;--accent:#0b8;--muted:#666}
-  body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);margin:0;color:#111}
-  header{background:#0b8;color:#fff;padding:12px;text-align:center;font-weight:700}
-  .app{max-width:1000px;margin:14px auto;padding:12px}
-  .card{background:var(--card);padding:12px;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.06);margin-bottom:12px}
-  input,select,button{font-size:15px;padding:8px;border-radius:8px;border:1px solid #ddd}
-  button{background:#0b8;color:#fff;border:0}
-  .row{display:flex;gap:8px;align-items:center}
-  #juegoArea{height:260px;background:#0e0e0e;border-radius:8px;position:relative;overflow:hidden;margin-top:8px}
-  #player{position:absolute;left:45%;bottom:8%;width:9%;min-width:36px;height:12%;min-height:36px;background:#4caf50;border-radius:8px}
-  .cubo{position:absolute;border-radius:6px}
-  .small{font-size:13px;color:var(--muted)}
-  .obj{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;border:1px solid #eee;margin-bottom:6px;background:#fff}
-  .side{max-width:360px;margin-left:12px}
-  .grid{display:grid;grid-template-columns:1fr 360px;gap:12px}
-  .badge{padding:4px 7px;border-radius:999px;font-weight:700;font-size:12px}
-  footer{text-align:center;padding:8px;color:var(--muted)}
-  .backBtn{background:#666;color:#fff}
-  @media (max-width:920px){.grid{grid-template-columns:1fr}}
+  body { font-family: Arial; background:#111; color:white; text-align:center; }
+  .seccion { display:none; padding:20px; }
+  button{ padding:10px; margin:5px; font-size:16px; }
+  #chatBox{ width:90%; height:150px; background:#222; margin:auto; padding:10px; overflow-y:scroll; }
+  #jugadoresActivos div, #topGlobal div { background:#222; margin:3px; padding:5px; }
 </style>
 </head>
+
 <body>
-<header>Marketplace Juego - En línea</header>
-<div class="app">
 
-  <!-- LOGIN -->
-  <div class="card" id="screen-login">
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <input id="userInput" placeholder="Usuario"/>
-      <input id="passInput" placeholder="Contraseña" type="password"/>
-      <button id="btnCreate">Crear cuenta (3 comunes)</button>
-      <button id="btnLogin">Entrar</button>
-    </div>
-    <div class="small" style="margin-top:8px">Al crear cuenta recibirás 3 objetos <strong>Común</strong> y 50 CarriCoins.</div>
-  </div>
+<!-- ███████████████████████ -->
+<!--       MENÚ DE INICIO     -->
+<!-- ███████████████████████ -->
+<div id="menuInicio" class="seccion" style="display:block;">
+  <h1>Iniciar sesión / Crear cuenta</h1>
 
-  <div class="grid">
+  <input id="userInput" placeholder="Usuario"><br><br>
+  <input id="passInput" type="password" placeholder="Contraseña"><br><br>
 
-    <div>
-
-      <!-- MENU -->
-      <div class="card" id="screen-menu" style="display:none">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div><strong>Usuario:</strong> <span id="meUser">—</span></div>
-            <div class="small">Coins: <span id="meCoins">0</span> · Tickets: <span id="meTickets">0</span></div>
-          </div>
-          <div style="text-align:right">
-            <div class="small">Chat se borra cada 3 min</div>
-            <button id="btnLogout" style="background:#e44">Salir</button>
-          </div>
-        </div>
-
-        <div style="margin-top:12px;display:grid;gap:8px">
-          <button id="openGame">Jugar: Esquivar cubos</button>
-          <button id="openMarket">Marketplace</button>
-          <button id="openInv">Inventario</button>
-          <button id="openHist">Historial</button>
-          <button id="openRuleta">Ruleta & Tickets</button>
-          <button id="openChat">Chat Global</button>
-        </div>
-      </div>
-
-      <!-- MINIJUEGO -->
-      <div class="card" id="screen-game" style="display:none">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div><strong>Minijuego - Esquivar cubos</strong><div class="small">Al reiniciar se transfieren puntos a Coins si estás logueado</div></div>
-          <div>Puntos: <strong id="gameScore">0</strong></div>
-        </div>
-
-        <div id="juegoArea">
-          <div id="player"></div>
-        </div>
-
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <button id="left">⬅️</button>
-          <button id="right">➡️</button>
-          <button id="restartGame" style="background:#167">🔄 Reiniciar (pasar puntos a Coins)</button>
-          <button id="pauseGame" style="background:#666">⏹️ Pausar</button>
-        </div>
-
-        <div style="margin-top:8px">
-          <button class="backBtn" onclick="show('menu')">Volver al menú</button>
-        </div>
-      </div>
-
-      <!-- MARKETPLACE -->
-      <div class="card" id="screen-market" style="display:none">
-        <h3>Marketplace</h3>
-        <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
-          <select id="sellSelect"></select>
-          <input id="sellPrice" placeholder="Precio CC" style="width:120px"/>
-          <button id="btnPutSale">Poner en venta</button>
-          <button class="backBtn" onclick="show('menu')">Volver al menú</button>
-        </div>
-        <h4>Productos a la venta</h4>
-        <div id="marketList" style="max-height:260px;overflow:auto"></div>
-      </div>
-
-      <!-- INVENTARIO -->
-      <div class="card" id="screen-inv" style="display:none">
-        <h3>Inventario</h3>
-        <div id="invList" style="max-height:320px;overflow:auto"></div>
-        <div style="margin-top:8px"><button class="backBtn" onclick="show('menu')">Volver al menú</button></div>
-      </div>
-
-      <!-- HISTORIAL -->
-      <div class="card" id="screen-hist" style="display:none">
-        <h3>Historial de ventas</h3>
-        <div id="histList" style="max-height:320px;overflow:auto"></div>
-        <div style="margin-top:8px"><button class="backBtn" onclick="show('menu')">Volver al menú</button></div>
-      </div>
-
-      <!-- RULETA / GIFT -->
-      <div class="card" id="screen-ruleta" style="display:none">
-        <h3>Ruleta & Tickets</h3>
-        <div class="small">Tickets: <span id="uiTickets">0</span></div>
-        <div style="display:flex;gap:6px;margin-top:8px">
-          <button id="buy1">Comprar 1 (100 CC)</button>
-          <button id="buy10">Comprar 10 (900 CC)</button>
-          <button id="useTicket">Usar Ticket</button>
-        </div>
-
-        <hr/>
-
-        <h4>Regalo</h4>
-        <div class="small">Toca 500 veces para ganar un objeto aleatorio</div>
-        <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
-          <button id="giftBtn">🎁</button>
-          <div class="small" id="giftCnt">0 / 500</div>
-        </div>
-
-        <div style="margin-top:8px"><button class="backBtn" onclick="show('menu')">Volver al menú</button></div>
-      </div>
-
-    </div>
-
-    <!-- SIDEBAR: CHAT, JUGADORES, OBJETOS POR RANGO -->
-    <div class="side">
-
-      <div class="card" id="screen-chat" style="display:none">
-        <h4>Chat Global</h4>
-        <div id="chatBox" style="height:220px;overflow:auto;border:1px solid #eee;padding:8px;background:#fff"></div>
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <input id="chatInput" placeholder="Escribe..." />
-          <button id="sendChat">Enviar</button>
-        </div>
-        <div style="margin-top:8px">
-          <button class="backBtn" onclick="show('menu')">Volver al menú</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h4>Jugadores Activos</h4>
-        <div id="playersBox" style="max-height:150px;overflow:auto"></div>
-        <h4 style="margin-top:8px">Top Coins</h4>
-        <div id="topBox" style="max-height:120px;overflow:auto"></div>
-      </div>
-
-      <div class="card">
-        <h4>Objetos por rareza</h4>
-        <div id="objectsBox" style="max-height:340px;overflow:auto"></div>
-      </div>
-
-    </div>
-
-  </div>
-
+  <button onclick="crearCuenta()">Crear cuenta</button>
+  <button onclick="iniciarSesion()">Entrar</button>
 </div>
 
-<footer>Listo para desplegar en GitHub Pages + Firebase Realtime</footer>
+<!-- ███████████████████████ -->
+<!--     MENÚ PRINCIPAL     -->
+<!-- ███████████████████████ -->
+<div id="menuPrincipal" class="seccion">
+  <h1>Menú Principal</h1>
 
-<!-- FIREBASE (compat) -->
-<script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-database-compat.js"></script>
+  <button onclick="mostrar('marketplace')">Marketplace</button><br>
+  <button onclick="mostrar('regalo')">Regalo Diario</button><br>
+  <button onclick="mostrar('tickets')">Comprar Tickets</button><br>
+  <button onclick="mostrar('objLista')">Lista de Objetos</button><br>
+  <button onclick="mostrar('juego')">Juego Mini</button><br>
+  <button onclick="cerrarSesion()">Cerrar Sesión</button><br><br>
+
+  <h2>Chat Global</h2>
+  <div id="chatBox"></div>
+  <input id="chatMensaje" placeholder="Escribe..." style="width:70%;">
+  <button onclick="enviarMensaje()">Enviar</button>
+
+  <h2>Jugadores Activos</h2>
+  <div id="jugadoresActivos"></div>
+
+  <h2>Top Global</h2>
+  <div id="topGlobal"></div>
+</div>
+
+<!-- ███████████████████ -->
+<!--  OTRAS SECCIONES   -->
+<!-- ███████████████████ -->
+
+<div id="marketplace" class="seccion">
+  <h2>Marketplace</h2>
+  <p>Aquí irá el marketplace real.</p>
+  <button onclick="mostrar('menuPrincipal')">Volver</button>
+</div>
+
+<div id="regalo" class="seccion">
+  <h2>Regalo Diario</h2>
+  <button onclick="darRegalo()">Reclamar</button>
+  <p id="regaloMsg"></p>
+  <button onclick="mostrar('menuPrincipal')">Volver</button>
+</div>
+
+<div id="tickets" class="seccion">
+  <h2>Tickets</h2>
+  <p>Tienes: <span id="ticketsCount">0</span></p>
+  <button onclick="comprarTicket()">Comprar Ticket (500 CC)</button>
+  <button onclick="mostrar('menuPrincipal')">Volver</button>
+</div>
+
+<div id="objLista" class="seccion">
+  <h2>Tu Inventario</h2>
+  <div id="inventarioBox"></div>
+  <button onclick="mostrar('menuPrincipal')">Volver</button>
+</div>
+
+<div id="juego" class="seccion">
+  <h2>Mini juego</h2>
+  <p>Próximamente</p>
+  <button onclick="mostrar('menuPrincipal')">Volver</button>
+</div>
+
+<!-- ███████████████████████ -->
+<!--        FIREBASE         -->
+<!-- ███████████████████████ -->
+
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
 
 <script>
-/* ------------------ TU FIREBASE CONFIG --------------------
-   (ya me diste este config antes — está usado aquí)
-------------------------------------------------------------*/
 const firebaseConfig = {
   apiKey: "AIzaSyADVjuoLhcH34XPmZv-sx-eP71rIxVEKEY",
   authDomain: "juego-marketplace.firebaseapp.com",
-  databaseURL: "https://juego-marketplace-default-rtdb.firebaseio.com/",
   projectId: "juego-marketplace",
   storageBucket: "juego-marketplace.firebasestorage.app",
   messagingSenderId: "258620166110",
   appId: "1:258620166110:web:3a101d6f7743b6dbc6574f",
-  measurementId: "G-0GZDE8FNEC"
+  measurementId: "G-0GZDE8FNEC",
+  databaseURL: "https://juego-marketplace-default-rtdb.firebaseio.com/"
 };
 
 firebase.initializeApp(firebaseConfig);
-const rdb = firebase.database();
-const refUsers = rdb.ref('usuarios');
-const refChat = rdb.ref('chat');
-const refVentas = rdb.ref('ventas');
+const db = firebase.database();
 
-/* ------------------ OBJETOS (lista que pediste) ------------------ */
-/* RANGOS y sus items (usé exactamente los emojis/nombres que mandaste, agrupados) */
-const objetosPorRango = {
-  "Común": ["🐻","🐺","🐶","🐱","🐯"],
-  "Poco común": ["🐨","🦁","🐵","🙉","🐮"],
-  "Épico": ["🦝","🦊","🐰","🐭","🐹","🐻‍❄️"],
-  "Mítico": ["🗽","🗿","🌬️","🌀","🌪️"],
-  "Legendarios": ["🦠","🪱","🐛","🌊","🌄"],
-  "UltraLegendarios": ["🤖","🎃","👿","⛄","👺","☠️"],
-  "Xprn": ["🍄","🌵","🌴","🌳","🌲"],            /* xprn group */
-  "Toxtor": ["🦕","🦖","🐊","🐍","🦎"],        /* toxtor */
-  "Gamma": ["🦄","🐗","🦫","🦨","🦇","🦜"],
-  "Dioses": ["🐲","🦎","🦚"],
-  "Maestro": ["🕎","🔯","✡️","☦️","✝️","🪯","☪️","☯️","☮️","☸️","🕉️","🛐","⚛️"]
+let userActual = null;
+
+/* ████████████████████████████████████
+          SISTEMA DE OBJETOS
+████████████████████████████████████ */
+const objetos = {
+  comun: ["🐻","🐺","🐶","🐱","🐯"],
+  poco: ["🐨","🦁","🐵","🙉","🐮"],
+  epico: ["🦝","🦊","🐰","🐭","🐹","🐻‍❄️"],
+  mitico: ["🗽","🗿","🌬️","🌀","🌪️"],
+  legendario: ["🦠","🪱","🐛","🌊","🌄"],
+  ultra: ["🤖","🎃","👿","⛄","👺","☠️"],
+  xprn: ["🍄","🌵","🌴","🌳","🌲"],
+  toxtor: ["🦕","🦖","🐊","🐍","🦎"],
+  gamma: ["🦄","🐗","🦫","🦨","🦇","🦜"],
+  dioses: ["🐲","🦎","🦚"],
+  maestro: ["🕎","🔯","✡️","☦️","✝️","🪯","☪️","☯️","☮️","☸️","🕉️","🛐","⚛️"]
 };
 
-/* ------------------ MUTACIONES ------------------ */
-const mutaciones = [
-  {code:"", prob:85},
-  {code:"CH", prob:6},
-  {code:"GH", prob:4},
-  {code:"TH", prob:3},
-  {code:"RH", prob:1.5},
-  {code:"HH", prob:0.5}
-];
+const probabilidades = {
+  comun: 40,
+  poco: 20,
+  epico: 12,
+  mitico: 8,
+  legendario: 6,
+  ultra: 5,
+  xprn: 4,
+  toxtor: 3,
+  gamma: 1.3,
+  dioses: 0.6,
+  maestro: 0.1
+};
 
-/* ------------------ PROBABILIDADES por RANGO (% sumando ~100) ------------------
-   entre más alto el rango, menos probabilidad (ajustable)
---------------------------------------------------------------------*/
-const probRangos = [
-  {rango:"Común", prob:30},
-  {rango:"Poco común", prob:20},
-  {rango:"Épico", prob:15},
-  {rango:"Mítico", prob:8},
-  {rango:"Legendarios", prob:7},
-  {rango:"UltraLegendarios", prob:5},
-  {rango:"Xprn", prob:4},
-  {rango:"Toxtor", prob:3},
-  {rango:"Gamma", prob:3},
-  {rango:"Dioses", prob:2},
-  {rango:"Maestro", prob:1}
-];
-
-/* ------------------ FUNCIONES AUX ------------------ */
-function elegirPorProb(list){
-  const r = Math.random()*100; let s=0;
-  for(let i=0;i<list.length;i++){ s+=list[i].prob; if(r<=s) return list[i]; }
-  return list[0];
+/* ████████████████████████████████████
+          FUNCIÓN MOSTRAR
+████████████████████████████████████ */
+function mostrar(id){
+  document.querySelectorAll(".seccion").forEach(s=>s.style.display="none");
+  document.getElementById(id).style.display="block";
 }
 
-function obtenerObjetoAleatorio(){
-  const sel = elegirPorProb(probRangos).rango;
-  const pool = objetosPorRango[sel] || objetosPorRango["Común"];
-  const base = pool[Math.floor(Math.random()*pool.length)];
-  const mut = elegirPorProb(mutaciones).code;
-  const name = mut ? `${base} (${mut})` : base;
-  return { nombre: name, rango: sel };
-}
+/* ████████████████████████████████████
+         SISTEMA DE SESIÓN
+████████████████████████████████████ */
 
-/* ------------------ ESTADO CLIENTE ------------------ */
-let me = null; // {user, coins, tickets, objetos:[], historial:[]}
-let chatCache = [];
-let ventasCache = {};
+function crearCuenta(){
+  let u = userInput.value.trim();
+  let p = passInput.value.trim();
+  if(!u || !p) return alert("Llene todo");
 
-/* ------------------ UI helpers ------------------ */
-const $ = id => document.getElementById(id);
-
-function show(screen){
-  // hide all screens
-  ['screen-login','screen-menu','screen-game','screen-market','screen-inv','screen-hist','screen-ruleta','screen-chat'].forEach(id=>{
-    const el = document.getElementById(id);
-    if(el) el.style.display = 'none';
+  db.ref("usuarios/"+u).set({
+    pass:p,
+    coins:1000,
+    tickets:3,
+    inventario:[]
   });
-  document.getElementById('screen-'+screen).style.display = 'block';
+
+  alert("Cuenta creada");
 }
 
-/* render objects by range */
-function renderObjectsBox(){
-  const cont = $('objectsBox'); cont.innerHTML = '';
-  Object.keys(objetosPorRango).forEach(r=>{
-    objetosPorRango[r].slice(0,6).forEach(n=>{
-      const d = document.createElement('div'); d.className='obj'; d.innerHTML = `<div><strong>${n}</strong><div class="small">${r}</div></div><div><span class="badge">${r}</span></div>`;
-      cont.appendChild(d);
-    });
+function iniciarSesion(){
+  let u = userInput.value.trim();
+  let p = passInput.value.trim();
+
+  db.ref("usuarios/"+u).once("value", snap=>{
+    if(!snap.exists()) return alert("No existe");
+    if(snap.val().pass !== p) return alert("Contraseña incorrecta");
+
+    userActual = u;
+    cargarDatos();
+    mostrar("menuPrincipal");
   });
 }
 
-/* show me */
-function refreshMeUI(){
-  $('meUser').innerText = me ? me.user : '—';
-  $('meCoins').innerText = me ? (me.coins||0) : 0;
-  $('meTickets').innerText = me ? (me.tickets||0) : 0;
-  $('uiTickets').innerText = me ? (me.tickets||0) : 0;
+function cerrarSesion(){
+  userActual=null;
+  mostrar("menuInicio");
 }
 
-/* render inventario */
-function renderInv(){
-  const inv = $('invList'); inv.innerHTML = '';
-  if(!me || !me.objetos || me.objetos.length===0){ inv.innerHTML = '<div class="small">Inventario vacío</div>'; return; }
-  me.objetos.forEach((o,i)=>{
-    const d = document.createElement('div'); d.className='obj';
-    d.innerHTML = `<div><strong>${o.nombre}</strong><div class="small">${o.rango}</div></div><div><button onclick="sellIndex(${i})">Vender</button></div>`;
-    inv.appendChild(d);
-  });
-  // rellena select sell
-  const sel = $('sellSelect'); if(sel){ sel.innerHTML=''; me.objetos.forEach((o,i)=>{ const opt=document.createElement('option'); opt.value=i; opt.text=`${o.nombre} (${o.rango})`; sel.appendChild(opt); }); }
-}
-
-/* render ventas */
-function renderVentas(){
-  const list = $('marketList'); list.innerHTML='';
-  Object.keys(ventasCache).forEach(k=>{
-    const v = ventasCache[k];
-    const d = document.createElement('div'); d.className='obj';
-    d.innerHTML = `<div><strong>${v.nombre}</strong><div class="small">${v.rango}</div><div class="small">Vende: ${v.vendedor}</div></div>`;
-    const right = document.createElement('div'); right.innerHTML = `<div class="small">${v.precio} CC</div>`;
-    const btn = document.createElement('button');
-    btn.textContent = (me && me.user === v.vendedor) ? 'Tu venta' : 'Comprar';
-    btn.disabled = (me && me.user === v.vendedor);
-    btn.onclick = ()=> comprarVenta(k);
-    right.appendChild(btn);
-    d.appendChild(right);
-    list.appendChild(d);
+/* ████████████████████████████████████
+            DATOS
+████████████████████████████████████ */
+function cargarDatos(){
+  db.ref("usuarios/"+userActual).on("value", snap=>{
+    let d=snap.val();
+    document.getElementById("ticketsCount").innerText=d.tickets;
+    actualizarInventario(d.inventario);
   });
 }
 
-/* render chat */
-function renderChat(){
-  const box = $('chatBox'); box.innerHTML = '';
-  chatCache.forEach(m=>{
-    const d = document.createElement('div'); d.innerHTML = `<small class="small">${new Date(m.ts).toLocaleTimeString()}</small> <strong>${m.usuario}</strong>: ${m.texto}`;
-    box.appendChild(d);
-  });
-  box.scrollTop = box.scrollHeight;
+/* ████████████████████████████████████
+        INVENTARIO
+████████████████████████████████████ */
+function actualizarInventario(inv){
+  let box = document.getElementById("inventarioBox");
+  box.innerHTML = inv.join(" ");
 }
 
-/* render players top */
-function renderPlayersAndTop(usersObj){
-  const players = $('playersBox'); players.innerHTML=''; const top = $('topBox'); top.innerHTML='';
-  const arr = Object.keys(usersObj||{}).map(u=>({user:u, coins: usersObj[u].coins||0, last: usersObj[u].lastSeen||0}));
-  arr.sort((a,b)=>b.last - a.last);
-  arr.forEach(p=>{ const d=document.createElement('div'); d.className='small'; d.innerText = `${p.user} • ${p.coins} CC`; players.appendChild(d); });
-  arr.sort((a,b)=>b.coins - a.coins).slice(0,10).forEach(t=>{ const d=document.createElement('div'); d.className='small'; d.innerText = `${t.user}: ${t.coins} CC`; top.appendChild(d); });
-}
-
-/* ------------------ AUTH & USER FLOW ------------------ */
-/* crear cuenta: recibe 3 comunes y 50 coins */
-$('btnCreate').addEventListener('click', ()=>{
-  const user = $('userInput').value.trim(); const pass = $('passInput').value.trim();
-  if(!user || !pass) return alert('Usuario y contraseña requeridos');
-  refUsers.child(user).get().then(s=>{
-    if(s.exists()) return alert('Usuario ya existe');
-    // 3 comunes
-    const comunes = objetosPorRango['Común'];
-    const objs = []; for(let i=0;i<3;i++){ objs.push({nombre: comunes[Math.floor(Math.random()*comunes.length)], rango:'Común'}) }
-    const payload = { pass: pass, coins:50, tickets:0, objetos: objs, historial: [], lastSeen: Date.now() };
-    refUsers.child(user).set(payload).then(()=>{ alert('Cuenta creada con 3 Comunes y 50 CC'); });
-  });
-});
-
-/* login */
-$('btnLogin').addEventListener('click', ()=>{
-  const user = $('userInput').value.trim(); const pass = $('passInput').value.trim();
-  if(!user || !pass) return alert('Usuario y contraseña requeridos');
-  refUsers.child(user).get().then(s=>{
-    if(!s.exists()) return alert('Usuario no existe');
-    const data = s.val();
-    if(data.pass !== pass) return alert('Contraseña incorrecta');
-    me = { user: user, coins: data.coins||0, tickets: data.tickets||0, objetos: data.objetos||[], historial: data.historial||[] };
-    refUsers.child(user).update({ lastSeen: Date.now() });
-    // UI
-    refreshMeUI(); renderInv(); show('menu');
-    // update UI from DB realtime
-    refUsers.child(user).on('value', snap => {
-      const d = snap.val()||{};
-      me.coins = d.coins||0; me.tickets = d.tickets||0; me.objetos = d.objetos||[]; me.historial = d.historial||[];
-      refreshMeUI(); renderInv();
-    });
-  });
-});
-
-/* logout */
-$('btnLogout').addEventListener('click', ()=>{
-  if(me) refUsers.child(me.user).update({ lastSeen: Date.now() });
-  me = null; show('login'); $('userInput').value=''; $('passInput').value='';
-});
-
-/* ------------------ MARKETPLACE: poner en venta y comprar ------------------ */
-function sellIndex(index){
-  if(!me) return alert('Inicia sesión para vender');
-  const price = prompt('Precio en CC para vender este objeto:');
-  const p = parseInt(price);
-  if(isNaN(p) || p<=0) return alert('Precio inválido');
-  // quitar del inventario en DB y crear venta
-  refUsers.child(me.user).child('objetos').get().then(snap=>{
-    const arr = snap.exists() ? snap.val() : [];
-    if(!arr[index]) return alert('Objeto no encontrado');
-    const obj = arr.splice(index,1)[0];
-    refUsers.child(me.user).update({ objetos: arr }).then(()=>{
-      const venta = { vendedor: me.user, nombre: obj.nombre, rango: obj.rango, precio: p, ts: Date.now() };
-      const key = refVentas.push(venta).key;
-      // venta publicada automáticamente por listener
-      alert('Objeto puesto a la venta');
-    });
+/* ████████████████████████████████████
+            REGALO DIARIO
+████████████████████████████████████ */
+function darRegalo(){
+  let obj = generarObjeto();
+  db.ref("usuarios/"+userActual+"/inventario").get().then(s=>{
+    let arr=s.val()||[];
+    arr.push(obj);
+    db.ref("usuarios/"+userActual+"/inventario").set(arr);
+    regaloMsg.innerText="Ganaste: "+obj;
   });
 }
 
-$('btnPutSale').addEventListener('click', ()=>{
-  const idx = parseInt($('sellSelect').value);
-  const price = parseInt($('sellPrice').value);
-  if(isNaN(idx) || isNaN(price) || price<=0) return alert('Selecciona objeto y precio válido');
-  sellIndex(idx);
-});
+/* ████████████████████████████████████
+      SISTEMA DE PROBABILIDADES
+████████████████████████████████████ */
+function generarObjeto(){
+  let total=0;
+  for(let r in probabilidades) total+=probabilidades[r];
 
-/* comprar venta */
-function comprarVenta(key){
-  if(!me) return alert('Inicia sesión para comprar');
-  refVentas.child(key).get().then(snap=>{
-    if(!snap.exists()) return alert('Venta ya no existe');
-    const v = snap.val();
-    if(v.vendedor === me.user) return alert('No puedes comprar tu propia venta');
-    if((me.coins||0) < v.precio) return alert('No tienes CarriCoins');
-    // 1) restar coins comprador
-    const newBuyerCoins = (me.coins||0) - v.precio;
-    refUsers.child(me.user).update({ coins: newBuyerCoins }).then(()=>{
-      // 2) añadir objeto comprador
-      refUsers.child(me.user).child('objetos').get().then(bsnap=>{
-        const arr = bsnap.exists() ? bsnap.val() : [];
-        arr.push({ nombre: v.nombre, rango: v.rango });
-        refUsers.child(me.user).update({ objetos: arr });
-        // 3) pagar vendedor y agregar historial
-        refUsers.child(v.vendedor).get().then(vsnap=>{
-          const seller = vsnap.val() || {};
-          const sellerCoins = (seller.coins||0) + v.precio;
-          const sellerHist = seller.historial || [];
-          sellerHist.push({ vendido: v.nombre, precio: v.precio, cuando: Date.now() });
-          refUsers.child(v.vendedor).update({ coins: sellerCoins, historial: sellerHist }).then(()=>{
-            // 4) remover venta
-            refVentas.child(key).remove();
-            alert('Compra exitosa');
-          });
-        });
-      });
-    });
-  });
-}
+  let random = Math.random()*total;
+  let suma=0;
 
-/* ------------------ TICKETS y RULETAS ------------------ */
-$('buy1').addEventListener('click', ()=> comprarTickets(1));
-$('buy10').addEventListener('click', ()=> comprarTickets(10));
-$('useTicket').addEventListener('click', ()=> usarTicket());
-
-function comprarTickets(cant){
-  if(!me) return alert('Inicia sesión');
-  const precio = cant === 1 ? 100 : 900;
-  if((me.coins||0) < precio) return alert('No tienes CC');
-  const newCoins = (me.coins||0) - precio;
-  const newTickets = (me.tickets||0) + cant;
-  refUsers.child(me.user).update({ coins: newCoins, tickets: newTickets });
-}
-
-function usarTicket(){
-  if(!me) return alert('No tienes tickets');
-  refUsers.child(me.user).get().then(snap=>{
-    const d = snap.val() || {};
-    const tickets = (d.tickets||0) - 1;
-    if(tickets < 0) return alert('No tienes tickets');
-    refUsers.child(me.user).update({ tickets: tickets }).then(()=>{
-      // premio con prob por rango
-      const obj = obtenerObjetoAleatorio();
-      refUsers.child(me.user).child('objetos').get().then(os=>{
-        const arr = os.exists() ? os.val() : [];
-        arr.push(obj);
-        refUsers.child(me.user).update({ objetos: arr }).then(()=> alert('Ganaste en la ruleta: '+obj.nombre));
-      });
-    });
-  });
-}
-
-/* ------------------ REGALO 500 TOQUES ------------------ */
-let giftCount = 0;
-$('giftBtn').addEventListener('click', ()=>{
-  giftCount++; $('giftCnt').innerText = `${giftCount} / 500`;
-  if(giftCount >= 500){
-    if(!me) return alert('Inicia sesión para recibir regalo');
-    const obj = obtenerObjetoAleatorio();
-    refUsers.child(me.user).child('objetos').get().then(os=>{
-      const arr = os.exists() ? os.val() : [];
-      arr.push(obj);
-      refUsers.child(me.user).update({ objetos: arr }).then(()=> alert('Recibiste: '+obj.nombre));
-    });
-    giftCount = 0; $('giftCnt').innerText = '0 / 500';
-  }
-});
-
-/* ------------------ CHAT Realtime (se limpia cada 3 minutos) ------------------ */
-$('sendChat').addEventListener('click', ()=> {
-  const txt = $('chatInput').value.trim();
-  if(!txt) return;
-  if(!me) return alert('Inicia sesión para chatear');
-  refChat.push({ usuario: me.user, texto: txt, ts: Date.now() });
-  $('chatInput').value='';
-});
-
-/* reset chat cada 3 minutos en servidor: Aquí cliente borra cada 3 min (si quieres hacerlo en servidor, configura un cloud function) */
-setInterval(()=>{ refChat.remove(); }, 180000);
-
-/* ------------------ MINIJUEGO (simples cubos) ------------------ */
-let score = 0, cubes = [], gameInterval = null, paused = false;
-function startGame(){
-  if(gameInterval) clearInterval(gameInterval);
-  gameInterval = setInterval(()=>{
-    if(Math.random() < 0.06){
-      spawnCube();
+  for(let r in probabilidades){
+    suma+=probabilidades[r];
+    if(random <= suma){
+      let lista = objetos[r];
+      return lista[Math.floor(Math.random()*lista.length)];
     }
-    moveCubes();
-  }, 40);
+  }
 }
-function spawnCube(){
-  const c = document.createElement('div'); c.className='cubo'; c.style.width='10%'; c.style.height='12%';
-  c.style.left = (Math.random()*80)+'%'; c.style.top = '-12%'; c.style.background = '#' + Math.floor(Math.random()*16777215).toString(16);
-  $('juegoArea').appendChild(c);
-  cubes.push(c);
-  setTimeout(()=>{ if(c.parentNode) c.parentNode.removeChild(c); cubes = cubes.filter(x=>x!==c); }, 4000);
-}
-function moveCubes(){
-  cubes.forEach((c)=>{
-    const top = parseFloat(c.style.top) || -12;
-    c.style.top = (top + 0.7) + '%';
-    // colisión simple
-    const pL = parseFloat($('player').style.left) || 45, pR = pL + 9;
-    const cL = parseFloat(c.style.left) || 0, cR = cL + 10;
-    const pT = 78, pB = 95;
-    const cT = parseFloat(c.style.top), cB = cT + 12;
-    if(!(pR < cL || pL > cR || pB < cT || pT > cB)){
-      // colisión -> transferir score a coins si hay usuario
-      if(me) refUsers.child(me.user).get().then(snap=>{
-        const d = snap.val() || {};
-        const newCoins = (d.coins||0) + score;
-        refUsers.child(me.user).update({ coins: newCoins });
-      });
-      alert('Te chocaste! Ganaste '+score+' CC (transferidos)');
-      score = 0; $('gameScore').innerText = score;
-      cubes.forEach(cc=>cc.remove()); cubes=[]; clearInterval(gameInterval); gameInterval=null;
-    }
+
+/* ████████████████████████████████████
+             TICKETS
+████████████████████████████████████ */
+function comprarTicket(){
+  db.ref("usuarios/"+userActual).once("value", snap=>{
+    let d=snap.val();
+    if(d.coins<500) return alert("No tienes coins");
+
+    db.ref("usuarios/"+userActual+"/coins").set(d.coins-500);
+    db.ref("usuarios/"+userActual+"/tickets").set(d.tickets+1);
   });
 }
-$('left').addEventListener('click', ()=>{ const cur = parseFloat($('player').style.left)||45; $('player').style.left = Math.max(0,cur-9)+'%'; });
-$('right').addEventListener('click', ()=>{ const cur = parseFloat($('player').style.left)||45; $('player').style.left = Math.min(80,cur+9)+'%'; });
-$('restartGame').addEventListener('click', ()=>{
-  if(me) refUsers.child(me.user).get().then(snap=>{ const d = snap.val()||{}; const newCoins = (d.coins||0) + score; refUsers.child(me.user).update({ coins: newCoins }); });
-  score = 0; $('gameScore').innerText = 0;
-  cubes.forEach(c=>c.remove()); cubes=[]; if(gameInterval) clearInterval(gameInterval); startGame();
-});
-$('pauseGame').addEventListener('click', ()=>{
-  if(!paused){ paused=true; $('pauseGame').innerText='▶️ Reanudar'; if(gameInterval) clearInterval(gameInterval); } else { paused=false; $('pauseGame').innerText='⏹️ Pausar'; startGame(); }
-});
-/* dar puntos aleatorios mientras el juego corre (simulación de pasar cubos) */
-setInterval(()=>{ if(gameInterval && Math.random()<0.12){ score++; $('gameScore').innerText = score; } }, 700);
 
-/* ------------------ LISTENERS y SYNC FIREBASE ------------------ */
-refChat.on('value', snap=>{
-  const v = snap.val() || {};
-  chatCache = Object.keys(v).map(k => v[k]).sort((a,b)=>a.ts - b.ts);
-  renderChat();
+/* ████████████████████████████████████
+              CHAT
+████████████████████████████████████ */
+db.ref("chat").on("value", snap=>{
+  let box=document.getElementById("chatBox");
+  box.innerHTML="";
+  snap.forEach(m=>{
+    box.innerHTML+=m.val()+"<br>";
+  });
 });
 
-refVentas.on('value', snap=>{
-  ventasCache = snap.val() || {};
-  renderVentas();
-});
+function enviarMensaje(){
+  let msg = userActual+": "+chatMensaje.value;
+  db.ref("chat").push(msg);
+  chatMensaje.value="";
+}
 
-refUsers.on('value', snap=>{
-  const users = snap.val() || {};
-  renderPlayersAndTop(users);
-  // si hay sesión guardada, sincroniza me
-  const saved = localStorage.getItem('mj_user');
-  if(saved && (!me || me.user !== saved)){
-    refUsers.child(saved).get().then(ss=>{
-      const d = ss.val() || {};
-      me = { user: saved, coins: d.coins||0, tickets: d.tickets||0, objetos: d.objetos||[], historial: d.historial||[] };
-      localStorage.setItem('mj_user', saved);
-      refreshMeUI(); renderInv();
+/* ████████████████████████████████████
+        JUGADORES ACTIVOS / TOP
+████████████████████████████████████ */
+setInterval(()=>{
+  db.ref("usuarios").once("value", snap=>{
+    let activos=document.getElementById("jugadoresActivos");
+    let top=document.getElementById("topGlobal");
+    activos.innerHTML="";
+    top.innerHTML="";
+
+    let arr=[];
+
+    snap.forEach(u=>{
+      let d=u.val();
+      activos.innerHTML+=`<div>${u.key}</div>`;
+      arr.push({user:u.key,coins:d.coins});
     });
-  }
-});
 
-/* ------------------ PUBLIC FUNCTIONS expuesto globalmente ------------------ */
-window.comprarVenta = comprarVenta;
-window.sellIndex = sellIndex;
-
-/* ------------------ BOTONES DE NAVEGACIÓN desde MENU ------------------ */
-$('openGame').addEventListener('click', ()=>{ show('game'); startGame(); });
-$('openMarket').addEventListener('click', ()=>{ show('market'); });
-$('openInv').addEventListener('click', ()=>{ show('inv'); });
-$('openHist').addEventListener('click', ()=>{ show('hist'); });
-$('openRuleta').addEventListener('click', ()=>{ show('ruleta'); });
-$('openChat').addEventListener('click', ()=>{ show('chat'); });
-$('btnLogout').addEventListener('click', ()=>{ if(me) refUsers.child(me.user).update({ lastSeen: Date.now() }); me=null; localStorage.removeItem('mj_user'); show('login'); });
-
-/* ------------------ REWARD al crear cuenta o login --------
-   - Ya implementado: crear cuenta da 3 comunes.
-   - Si quieres recompensa diaria al iniciar sesión, se puede agregar.
-------------------------------------------------------------*/
-
-/* ------------------ RENDER inicial ------------------ */
-renderObjectsBox();
-show('login');
+    arr.sort((a,b)=>b.coins-a.coins);
+    arr.slice(0,10).forEach(t=>{
+      top.innerHTML+=`<div>${t.user}: ${t.coins} CC</div>`;
+    });
+  });
+},3000);
 </script>
+
 </body>
 </html>
