@@ -3,336 +3,180 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Marketplace Meme Colombiano (Realtime)</title>
+<title>Marketplace Juego - Completo</title>
 <style>
-  body{font-family:Arial,Helvetica,sans-serif;background:#f2f2f2;margin:0;padding:0;color:#111;text-align:center}
-  .pantalla{display:none;padding:16px}
-  button{padding:8px 10px;margin:6px;font-size:15px;cursor:pointer}
-  #topCoins{font-size:20px;display:none;margin:10px 0}
-  #juegoArea{width:90vw;max-width:420px;height:52vh;background:#222;margin:10px auto;position:relative;overflow:hidden;border-radius:8px}
-  #player{width:10%;min-width:30px;height:10%;min-height:30px;background:#0f0;position:absolute;bottom:6%;left:45%}
-  .cubo{width:10%;min-width:30px;height:10%;min-height:30px;background:red;position:absolute;top:0}
-  #chatMensajes{height:220px;overflow:auto;border:1px solid #000;background:#fff;padding:6px;text-align:left;margin:8px 0}
-  #invLista div,#objLista div,#histLista div,#listaVentas div,#chatMensajes div{margin:6px;padding:6px;border:1px solid #000;background:#fff}
-  .botonesMovimiento button{width:30vw;max-width:140px;height:44px;font-size:20px;margin:6px}
-  input,select{font-size:15px;padding:6px;margin:6px}
-  .row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+  :root{--bg:#f3f4f6;--card:#fff;--accent:#0b8;--muted:#666}
+  body{font-family:Inter,Arial,Helvetica,sans-serif;background:var(--bg);margin:0;color:#111}
+  header{background:#0b8;padding:12px;color:#fff;text-align:center;font-weight:700}
+  .app{max-width:1000px;margin:18px auto;padding:12px}
+  .grid{display:grid;grid-template-columns:1fr 360px;gap:12px}
+  .card{background:var(--card);padding:10px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .row{display:flex;gap:8px;align-items:center}
+  button{cursor:pointer;padding:8px 10px;border-radius:6px;border:0;background:#0b8;color:#fff}
+  input,select{padding:8px;border:1px solid #ddd;border-radius:6px;width:100%}
+  label{font-size:13px;color:var(--muted)}
+  #juegoArea{height:280px;background:#111;border-radius:6px;position:relative;overflow:hidden}
+  #player{position:absolute;left:45%;bottom:10%;width:10%;min-width:40px;height:12%;min-height:40px;background:#4caf50;border-radius:6px}
+  .cubo{position:absolute;width:10%;min-width:30px;height:12%;min-height:30px;background:red;border-radius:6px}
+  #chatMensajes{height:220px;overflow:auto;border:1px solid #eee;padding:8px;background:#fafafa;border-radius:6px}
+  .small{font-size:13px;color:var(--muted)}
+  .obj{display:flex;justify-content:space-between;gap:8px;padding:8px;border-radius:6px;background:#fff;border:1px solid #eee;margin-bottom:6px}
+  .badge{padding:4px 8px;border-radius:999px;font-weight:700;font-size:12px}
+  .rare-Común{background:#e6f7e6;color:#1b5e20}
+  .rare-Raro{background:#e8f0ff;color:#0b47a1}
+  .rare-Épico{background:#fff0e6;color:#a14b00}
+  .rare-Legendario{background:#f7e6ff;color:#5a0270}
+  .rare-UltraLegendario{background:#fff5e6;color:#7a3600}
+  .rare-OP{background:#ffe6e6;color:#7a0000}
+  .rare-Dioses{background:#fff8e6;color:#8a5a00}
+  .mut{opacity:.9;padding:2px 6px;border-radius:6px;background:#222;color:#fff;margin-left:6px}
+  footer{text-align:center;padding:10px;font-size:13px;color:var(--muted)}
+  @media (max-width:900px){.grid{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
 
-<h2 id="topCoins">CarriCoins: 0</h2>
+<header>Marketplace Juego — Realtime</header>
 
-<!-- LOGIN -->
-<div id="login" class="pantalla" style="display:block">
-  <h1>Iniciar sesión / Crear cuenta</h1>
-  <input id="user" placeholder="Usuario" autocomplete="off"><br>
-  <input id="pass" placeholder="Contraseña" type="password"><br>
-  <button onclick="crearCuenta()">Crear cuenta (3 objetos comunes)</button>
-  <button onclick="entrar()">Entrar</button>
-</div>
+<div class="app">
 
-<!-- MENU -->
-<div id="menu" class="pantalla">
-  <h1>Menú Principal</h1>
-  <div class="row">
-    <button onclick="mostrar('juego')">Jugar: esquivar cubos</button>
-    <button onclick="mostrar('market')">Marketplace</button>
+  <div class="card" id="loginCard">
+    <div style="display:flex;gap:8px;align-items:center">
+      <input id="inputUser" placeholder="Usuario" />
+      <input id="inputPass" placeholder="Contraseña" type="password" />
+      <button id="btnCreate">Crear cuenta</button>
+      <button id="btnLogin">Entrar</button>
+      <button id="btnLogout" style="display:none;background:#f55">Salir</button>
+    </div>
+    <div class="small" style="margin-top:8px">Si creas cuenta recibes 3 objetos comunes y 50 CarriCoins.</div>
   </div>
-  <div class="row">
-    <button onclick="mostrar('inventario')">Inventario</button>
-    <button onclick="mostrar('historial')">Historial ventas</button>
+
+  <div class="grid" style="margin-top:12px">
+    <div>
+
+      <!-- TOP BAR -->
+      <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-weight:700">Usuario: <span id="meUser">—</span></div>
+          <div class="small">Coins: <span id="meCoins">0</span> · Tickets: <span id="meTickets">0</span></div>
+        </div>
+        <div style="text-align:right">
+          <div class="small">Activos: <span id="activeCount">0</span></div>
+          <div class="small">Chat resetea cada 3 min</div>
+        </div>
+      </div>
+
+      <!-- Juego / Minijuego simple con puntos -->
+      <div class="card" style="margin-top:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><strong>Minijuego: Esquivar cubos</strong><div class="small">Gana puntos, conviértelos en CarriCoins al reiniciar.</div></div>
+          <div id="scoreBox">Puntos: <strong id="scoreVal">0</strong></div>
+        </div>
+
+        <div id="juegoArea" style="margin-top:10px">
+          <div id="player"></div>
+        </div>
+
+        <div class="row" style="margin-top:8px">
+          <button id="leftBtn">⬅️</button>
+          <button id="rightBtn">➡️</button>
+          <button id="resetMinigame" style="background:#167;min-width:120px">🔄 Reiniciar (guardar puntos)</button>
+          <button id="pauseBtn" style="background:#555">⏹️ Pausar</button>
+        </div>
+
+        <div style="margin-top:8px" class="small">Al reiniciar se transfieren los puntos recogidos a CarriCoins (si estás logueado).</div>
+      </div>
+
+      <!-- Marketplace -->
+      <div class="card" style="margin-top:12px">
+        <h3 style="margin:0">Marketplace</h3>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <select id="sellSelect"></select>
+          <input id="sellPrice" placeholder="Precio CC" style="width:120px"/>
+          <button id="btnSell">Poner a la venta</button>
+        </div>
+
+        <h4 style="margin-top:10px">A la venta</h4>
+        <div id="marketList" style="max-height:180px;overflow:auto"></div>
+      </div>
+
+      <!-- Inventario y Historial -->
+      <div class="card" style="margin-top:12px;display:flex;gap:12px">
+        <div style="flex:1">
+          <h4 style="margin:4px 0">Inventario</h4>
+          <div id="invList" style="max-height:180px;overflow:auto"></div>
+        </div>
+        <div style="width:260px">
+          <h4 style="margin:4px 0">Historial de ventas</h4>
+          <div id="histList" style="max-height:180px;overflow:auto"></div>
+        </div>
+      </div>
+
+      <!-- Ruleta y regalos -->
+      <div class="card" style="margin-top:12px;display:flex;gap:8px;align-items:center">
+        <div style="flex:1">
+          <h4 style="margin:4px 0">Ruleta</h4>
+          <div class="small">Tickets: <span id="ticketCount">0</span></div>
+          <div style="display:flex;gap:6px;margin-top:6px">
+            <button id="buy1">Comprar 1 (100 CC)</button>
+            <button id="buy10">Comprar 10 (900 CC)</button>
+            <button id="spin">Usar ticket</button>
+          </div>
+
+          <h4 style="margin-top:12px;margin-bottom:6px">Regalo</h4>
+          <div class="small">Toca 500 veces el regalo y obtén un objeto aleatorio</div>
+          <div style="display:flex;gap:6px;margin-top:6px">
+            <button id="giftBtn">🎁 Tocar</button>
+            <div class="small" id="giftCount">0 / 500</div>
+          </div>
+        </div>
+
+        <div style="width:220px">
+          <h4 style="margin:4px 0">Lista de objetos (preview)</h4>
+          <div id="objPreview" style="max-height:220px;overflow:auto"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SIDE: chat, jugadores y objetos por rareza -->
+    <div>
+      <div class="card">
+        <h4 style="margin:4px 0">Chat global</h4>
+        <div id="chatMensajes"></div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <input id="chatInput" placeholder="Escribe..." />
+          <button id="sendChat">Enviar</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <h4 style="margin:4px 0">Jugadores activos</h4>
+        <div id="playersList" style="max-height:160px;overflow:auto"></div>
+        <div style="margin-top:8px" class="small">Top por CarriCoins</div>
+        <div id="topList" style="margin-top:6px;max-height:120px;overflow:auto"></div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <h4 style="margin:4px 0">Objetos por rareza</h4>
+        <div id="objectsByRarity" style="max-height:280px;overflow:auto"></div>
+      </div>
+    </div>
   </div>
-  <div class="row">
-    <button onclick="mostrar('objLista')">Lista de objetos</button>
-    <button onclick="mostrar('regalo')">Regalo (500 toques)</button>
-  </div>
-  <div class="row">
-    <button onclick="mostrar('ruleta')">Ruleta</button>
-    <button onclick="mostrar('chatPantalla')">Chat / Jugadores</button>
-  </div>
+
 </div>
 
-<!-- JUEGO -->
-<div id="juego" class="pantalla">
-  <h2>Esquivar cubos</h2>
-  <div id="juegoArea"><div id="player"></div></div>
-  <p id="score">Puntos: 0</p>
-  <div class="botonesMovimiento">
-    <button onclick="mover(-10)">⬅️</button>
-    <button onclick="mover(10)">➡️</button>
-    <button id="pauseBtn">⏹️ Pausar/Reanudar</button>
-  </div>
-  <div class="row">
-    <button onclick="reiniciarCubos()">🔄 Reiniciar (guardar puntos)</button>
-    <button onclick="volverMenu()">Volver</button>
-  </div>
-</div>
+<footer>Hecho para ti — copia el archivo completo a GitHub Pages o abre localmente</footer>
 
-<!-- MARKET -->
-<div id="market" class="pantalla">
-  <h2>Marketplace</h2>
-  <h3>Vender</h3>
-  <select id="sellItem"></select><br>
-  <input id="sellPrice" placeholder="Precio en CarriCoins (número)"><br>
-  <button onclick="ponerEnVenta()">Poner en venta</button>
-  <h3>Comprar (listado global)</h3>
-  <div id="listaVentas"></div>
-  <div class="row"><button onclick="volverMenu()">Volver</button></div>
-</div>
-
-<!-- INVENTARIO -->
-<div id="inventario" class="pantalla">
-  <h2>Inventario</h2>
-  <div id="invLista"></div>
-  <div class="row"><button onclick="volverMenu()">Volver</button></div>
-</div>
-
-<!-- HISTORIAL -->
-<div id="historial" class="pantalla">
-  <h2>Historial de ventas</h2>
-  <div id="histLista"></div>
-  <div class="row"><button onclick="volverMenu()">Volver</button></div>
-</div>
-
-<!-- OBJETOS -->
-<div id="objLista" class="pantalla">
-  <h2>Objetos por rareza</h2>
-  <div id="listaObjetos"></div>
-  <div class="row"><button onclick="volverMenu()">Volver</button></div>
-</div>
-
-<!-- REGALO -->
-<div id="regalo" class="pantalla">
-  <h2>Regalo</h2>
-  <p>Toca 500 veces para recibir un objeto</p>
-  <p id="toques">Toques: 0 / 500</p>
-  <button id="tocarRegalo">🎁</button>
-  <div class="row"><button onclick="volverMenu()">Volver</button></div>
-</div>
-
-<!-- RULETA -->
-<div id="ruleta" class="pantalla">
-  <h2>Ruleta de Objetos</h2>
-  <p>Tickets disponibles: <span id="ticketCount">0</span></p>
-  <button onclick="comprarTicket(1)">Comprar 1 Ticket (100 CC)</button>
-  <button onclick="comprarTicket(10)">Paquete 10 Tickets (900 CC)</button><br>
-  <button onclick="usarTicket()">Usar Ticket en Ruleta</button><br>
-  <div class="row"><button onclick="volverMenu()">Volver</button></div>
-</div>
-
-<!-- CHAT Y JUGADORES -->
-<div id="chatPantalla" class="pantalla">
-  <h2>Chat Global</h2>
-  <div id="chatMensajes"></div>
-  <input id="chatInput" placeholder="Escribe tu mensaje" style="width:70%">
-  <button onclick="enviarMensaje()">Enviar</button>
-  <div class="row"><button onclick="volverMenu()">Volver</button></div>
-  <h3>Jugadores activos</h3>
-  <div id="jugadoresActivos"></div>
-  <h3>Top CarriCoins</h3>
-  <div id="topDinero"></div>
-</div>
-
-<!-- ================= SCRIPT PRINCIPAL (LÓGICA + OBJETOS + PLACEHOLDERS) ================= -->
-<script>
-/* Local cache (se usa como respaldo, la versión real es en Firebase). */
-let cache = {}; // local cache
-let userActual = null;
-let puntos = 0;
-let cubosActivos = [];
-let intervalo = null;
-let juegoPausado = false;
-let toques = 0;
-let ventasLocal = [];
-let player = document.getElementById('player');
-let chatMensajes = [];
-
-/* ---- LISTA DE OBJETOS SEGÚN TU REGLA ----
-   - Tenta, Xero, Gama, Tux: 5 items cada uno
-   - Resto (Común .. Dioses): 7 items cada uno
-*/
-const objetosPorRango = {
-  "Común": [
-    "🦧 Goriloco-Bananín","🐸 PepeSaltarin","🐔 PolloNoob","🐢 TortuSpeed","🐍 SnekGamer","🐁 RatónFail","🐙 PulpoBrainrot"
-  ],
-  "Raro": [
-    "🐲 DragónThug","🦍 MonoBruh","🦖 T-RexEpicFail","🦁 LeónMood","🦊 ZorroCringe","🐧 PenguinoXD","🐵 MonoChad"
-  ],
-  "Épico": [
-    "🐙 PulpoOver9000","🦄 UnicórnitoLOL","🐺 LoboSus","🐉 DragónYeet","🦌 RenoBruhMoment","🐴 CaballoCringe","🦀 CrabbyMad"
-  ],
-  "Legendario": [
-    "👑 ReyCarritoSus","🐉 DragonCarroYeet","🦄 UnicórnitoBruh","🦖 T-RexChad","🐲 DragónEpicFail","🐉 FénixLOL","🐉 HydraSus"
-  ],
-  "UltraLegendario": [
-    "🐲 DragónFinalYeet","🐉 FénixCarroLOL","🐉 HydraUltraBruh","👑 CarritoSupremoEpic","🦄 UnicórnitoOP","🐉 NovaSus","🐉 AstroDios"
-  ],
-  "OP": [
-    "⚡ OP-GigaCarro","💥 OP-Smash","🔥 OP-Destructor","⚔️ OP-Breaker","🌪 OP-Storm","🔱 OP-Titan","🛡 OP-Guardian"
-  ],
-  "Dioses": [
-    "👹 MemeDios","👑 CarroDios","🌟 SupremoCarro","⚡ UltraMeme","🔥 DivinoCarrito","🌀 CaosDios","☯️ EquilibrioDios"
-  ],
-  // raras especiales: solo 5 cada una
-  "Gama": ["Gama-1","Gama-2","Gama-3","Gama-4","Gama-5"],
-  "Tenta": ["Tenta-1","Tenta-2","Tenta-3","Tenta-4","Tenta-5"],
-  "Xero": ["Xero-1","Xero-2","Xero-3","Xero-4","Xero-5"],
-  "Tux": ["Tux-1","Tux-2","Tux-3","Tux-4","Tux-5"]
-};
-
-/* Mutaciones y probabilidades (mutaciones raras)
-   "" = sin mutación (común)
-   CH GH TH RH HH = muy raras
-*/
-const mutaciones = [
-  {code:"", prob:85},
-  {code:"CH", prob:7},
-  {code:"GH", prob:4},
-  {code:"TH", prob:2},
-  {code:"RH", prob:1.5},
-  {code:"HH", prob:0.5}
-];
-
-/* Raridades y probabilidades base (ajusta si quieres) */
-const rangosProb = [
-  {rango:"Común", prob:30},
-  {rango:"Raro", prob:20},
-  {rango:"Épico", prob:15},
-  {rango:"Legendario", prob:10},
-  {rango:"UltraLegendario", prob:7},
-  {rango:"OP", prob:6},
-  {rango:"Dioses", prob:4},
-  {rango:"Gama", prob:3},
-  {rango:"Tenta", prob:2},
-  {rango:"Xero", prob:2},
-  {rango:"Tux", prob:1}
-];
-
-/* Escoge rango según prob */
-function seleccionarRango(){
-  const r = Math.random()*100;
-  let acum=0;
-  for(let i=0;i<rangosProb.length;i++){
-    acum += rangosProb[i].prob;
-    if(r<=acum) return rangosProb[i].rango;
-  }
-  return "Común";
-}
-
-/* Escoge mutación con probabilidades */
-function seleccionarMutacion(){
-  const r = Math.random()*100;
-  let acum=0;
-  for(let i=0;i<mutaciones.length;i++){
-    acum += mutaciones[i].prob;
-    if(r<=acum) return mutaciones[i].code;
-  }
-  return "";
-}
-
-/* Obtener objeto aleatorio teniendo en cuenta mutaciones (mut reduce prob de aparecer ya por el prob set) */
-function obtenerObjetoAleatorio(){
-  const rango = seleccionarRango();
-  const lista = objetosPorRango[rango] || objetosPorRango["Común"];
-  const nombreBase = lista[Math.floor(Math.random()*lista.length)];
-  const mut = seleccionarMutacion();
-  const nombreFinal = mut ? `${nombreBase} (${mut})` : nombreBase;
-  return { nombre: nombreFinal, rango: rango };
-}
-
-/* ===== UI helpers (misma estructura que antes) ===== */
-function guardarLocal(){
-  localStorage.setItem("cache", JSON.stringify(cache));
-  if(userActual) localStorage.setItem("userActual", userActual);
-}
-function mostrar(id){
-  document.querySelectorAll('.pantalla').forEach(p=>p.style.display='none');
-  document.getElementById(id).style.display='block';
-  if(id==="objLista") mostrarListaObjetos();
-  actualizarJugadoresUI(); // actualizar lista visible
-}
-function volverMenu(){mostrar('menu');}
-function actualizarTopCoinsUI(coins){ document.getElementById('topCoins').innerText="CarriCoins: "+coins; document.getElementById('topCoins').style.display='block'; }
-
-/* ====== Juego: mover, iniciar cubos, reiniciar ====== */
-function mover(x){ let pos = parseFloat(player.style.left)||45; pos+=x; if(pos<0) pos=0; if(pos>80) pos=80; player.style.left=pos+"%"; }
-function limpiarCubos(){ cubosActivos.forEach(c=>c.remove()); cubosActivos=[]; clearInterval(intervalo); }
-function reiniciarCubos(){ 
-  if(userActual) sumarCoinsFirebase(puntos);
-  puntos=0; document.getElementById('score').innerText="Puntos: 0"; limpiarCubos(); if(!juegoPausado) iniciarCubos();
-}
-function iniciarCubos(){
-  clearInterval(intervalo);
-  intervalo=setInterval(()=>{
-    if(Math.random()<0.03){ let cubo=document.createElement('div'); cubo.className='cubo'; cubo.style.left=Math.random()*80+'%'; cubo.style.top='0%'; document.getElementById('juegoArea').appendChild(cubo); cubosActivos.push(cubo); }
-    cubosActivos.forEach((c,i)=>{
-      let top=parseFloat(c.style.top); c.style.top=(top+0.6)+'%';
-      let pL=parseFloat(player.style.left), pR=pL+10, pT=90, pB=100, cL=parseFloat(c.style.left), cR=cL+10, cT=parseFloat(c.style.top), cB=cT+10;
-      if(!(pR<cL||pL>cR||pB<cT||pT>cB)){
-        if(userActual) sumarCoinsFirebase(puntos);
-        alert("Te chocaste! Ganaste "+puntos+" CarriCoins");
-        reiniciarCubos();
-      }
-      if(cT>100){ c.remove(); cubosActivos.splice(i,1); puntos++; document.getElementById('score').innerText="Puntos: "+puntos; }
-    });
-  },20);
-}
-document.getElementById('pauseBtn').addEventListener('click', ()=>{
-  if(!juegoPausado){ clearInterval(intervalo); juegoPausado=true; alert("Juego pausado ⏹️"); }
-  else{ iniciarCubos(); juegoPausado=false; alert("Juego reanudado ▶️"); }
-});
-
-/* ====== regalo 500 toques ====== */
-document.getElementById('tocarRegalo').addEventListener('click',()=>{
-  toques++; document.getElementById('toques').innerText=toques+" / 500";
-  if(toques>=500){
-    if(!userActual){ alert("Inicia sesión para recibir el objeto"); toques=0; document.getElementById('toques').innerText=toques+" / 500"; return; }
-    const obj = obtenerObjetoAleatorio();
-    agregarObjetoAUsuarioFirebase(obj);
-    alert("¡Recibiste un objeto del regalo!: "+obj.nombre);
-    toques=0; document.getElementById('toques').innerText=toques+" / 500";
-  }
-});
-
-/* ====== RULETA ====== */
-function comprarTicket(cant){ if(!userActual){ alert("Inicia sesión"); return; } const precio = cant==1?100:900; comprarTicketsFirebase(cant,precio); }
-function usarTicket(){ usarTicketFirebase(); }
-
-/* ====== CHAT UI (se actualiza desde Firebase) ====== */
-function mostrarChatUI(arr){ let chatDiv=document.getElementById('chatMensajes'); chatDiv.innerHTML=''; arr.forEach(m=>{ let d=document.createElement('div'); d.innerText = m.usuario + ': ' + m.texto; chatDiv.appendChild(d); }); chatDiv.scrollTop = chatDiv.scrollHeight; }
-
-/* ====== Jugadores y Top UI ====== */
-function actualizarJugadoresUI(usuarios){
-  let jugadoresDiv=document.getElementById('jugadoresActivos'); jugadoresDiv.innerHTML='';
-  let topDiv=document.getElementById('topDinero'); topDiv.innerHTML='';
-  if(!usuarios) return;
-  let list = Object.keys(usuarios).map(u=>({usuario:u,coins:usuarios[u].coins||0}));
-  list.forEach(x=>{ let d=document.createElement('div'); d.innerText = x.usuario; jugadoresDiv.appendChild(d); });
-  list.sort((a,b)=>b.coins-a.coins);
-  list.slice(0,10).forEach(t=>{ let d=document.createElement('div'); d.innerText = t.usuario + ': ' + t.coins + ' CC'; topDiv.appendChild(d); });
-}
-
-/* ====== Mostrar lista objetos (UI) ====== */
-function mostrarListaObjetos(){
-  const cont=document.getElementById('listaObjetos'); cont.innerHTML='';
-  Object.keys(objetosPorRango).forEach(r=>{
-    objetosPorRango[r].forEach(n=>{
-      let d=document.createElement('div'); d.innerText = n + ' ('+r+')'; cont.appendChild(d);
-    });
-  });
-}
-
-/* =================== FIREBASE (compat) =================== */
-/* Usamos compat para mejor compatibilidad en móviles */
-</script>
-
-<!-- Firebase compat SDKs -->
+<!-- ------------------ SCRIPTS: FIREBASE compat + LÓGICA ------------------ -->
 <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-database-compat.js"></script>
 
 <script>
-/* CONFIG: reemplaza si quieres, aquí está tu config actual */
+/* ====================== CONFIGURA ESTO: pega tu firebaseConfig aquí ======================
+   Reemplaza los valores por tu proyecto (puedes usar el que ya tienes).
+   Si vas a compartir el HTML público, el config no es secreto (solo claves públicas).
+===========================================================================================*/
 const firebaseConfig = {
   apiKey: "AIzaSyADVjuoLhcH34XPmZv-sx-eP71rIxVEKEY",
   authDomain: "juego-marketplace.firebaseapp.com",
@@ -345,136 +189,268 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-const rtdb = firebase.database();
-const refUsuarios = rtdb.ref('usuarios');
-const refChat = rtdb.ref('chat');
-const refVentas = rtdb.ref('ventas');
+const rdb = firebase.database();
+const refUsers = rdb.ref('usuarios');
+const refChat = rdb.ref('chat');
+const refVentas = rdb.ref('ventas');
 
-console.log("Firebase compat conectado");
+/* ====================== OBJETOS Y REGLAS ====================== */
+/* Objetos por rareza: Tenta/Xero/Gama/Tux = 5 cada uno; resto 7 cada uno */
+const objetosPorRango = {
+  "Común": ["🦧 Gorillaz-rondomol","🐸 PepeSaltarin","🐔 PolloNoob","🐢 TortuSpeed","🐍 SnekGamer","🐁 RatónFail","🐙 PulpoBrainrot"],
+  "Raro": ["🐲 DragónThug","🦍 MonoBruh","🦖 T-RexEpicFail","🦁 LeónMood","🦊 ZorroCringe","🐧 PenguinoXD","🐵 MonoChad"],
+  "Épico": ["🐙 PulpoOver9000","🦄 UnicórnitoLOL","🐺 LoboSus","🐉 DragónYeet","🦌 RenoBruhMoment","🐴 CaballoCringe","🦀 CrabbyMad"],
+  "Legendario": ["👑 ReyCarritoSus","🐉 DragonCarroYeet","🦄 UnicórnitoBruh","🦖 T-RexChad","🐲 DragónEpicFail","🐉 FénixLOL","🐉 HydraSus"],
+  "UltraLegendario": ["🐲 DragónFinalYeet","🐉 FénixCarroLOL","🐉 HydraUltraBruh","👑 CarritoSupremoEpic","🦄 UnicórnitoOP","🛡 UltraGuard","🔥 FlameLord"],
+  "OP": ["⚡ OP-GigaCarro","💥 OP-Smash","🔥 OP-Destructor","⚔️ OP-Breaker","🌪 OP-Storm","🔱 OP-Titan","🛡 OP-Guardian"],
+  "Dioses": ["👹 MemeDios","👑 CarroDios","🌟 SupremoCarro","⚡ UltraMeme","🔥 DivinoCarrito","🌀 CaosDios","☯️ EquilibrioDios"],
+  "Gama": ["Gama-A","Gama-B","Gama-C","Gama-D","Gama-E"],
+  "Tenta": ["Tenta-A","Tenta-B","Tenta-C","Tenta-D","Tenta-E"],
+  "Xero": ["Xero-A","Xero-B","Xero-C","Xero-D","Xero-E"],
+  "Tux": ["Tux-A","Tux-B","Tux-C","Tux-D","Tux-E"]
+};
 
-/* ---------- LISTENERS EN TIEMPO REAL ---------- */
+/* Mutaciones y probabilidades (en %). "" = sin mutación */
+const mutaciones = [
+  {code:"", prob:80},
+  {code:"CH", prob:8},
+  {code:"GH", prob:6},
+  {code:"TH", prob:3},
+  {code:"RH", prob:2},
+  {code:"HH", prob:1}
+];
 
-// Chat
-refChat.on('value', snap=>{
-  const obj = snap.val() || {};
-  const arr = Object.keys(obj).map(k=>({key:k, usuario: obj[k].usuario, texto: obj[k].texto, ts: obj[k].ts})).sort((a,b)=>a.ts-b.ts);
-  chatMensajes = arr;
-  mostrarChatUI(arr);
-});
+/* Probabilidad por rango (approx; suma 100) */
+const rangosProb = [
+  {rango:"Común", prob:30},
+  {rango:"Raro", prob:20},
+  {rango:"Épico", prob:15},
+  {rango:"Legendario", prob:10},
+  {rango:"UltraLegendario", prob:6},
+  {rango:"OP", prob:4},
+  {rango:"Dioses", prob:2},
+  {rango:"Gama", prob:4},
+  {rango:"Tenta", prob:4},
+  {rango:"Xero", prob:3},
+  {rango:"Tux", prob:2}
+];
 
-// Ventas
-refVentas.on('value', snap=>{
-  const obj = snap.val() || {};
-  const arr = Object.keys(obj).map(k=>({key:k, vendedor: obj[k].vendedor, nombre: obj[k].nombre, precio: obj[k].precio, rango: obj[k].rango}));
-  // actualizar UI
-  const lista = document.getElementById('listaVentas'); lista.innerHTML='';
-  arr.forEach(v=>{
-    let d=document.createElement('div');
-    const boton = (v.vendedor!==userActual) ? `<button onclick="comprarVentaFirebase('${v.key || v.key}')">Comprar</button>` : "[Tu objeto]";
-    d.innerHTML = `${v.nombre} (${v.rango}) - ${v.precio} CC - ${v.vendedor} ${v.key ? '' : ''}`;
-    // we attach element and set data-key attribute
-    d.dataset.key = v.key || '';
-    lista.appendChild(d);
+/* ====================== UTILIDADES ====================== */
+function elegirPorProb(lista){
+  const r = Math.random()*100; let s=0;
+  for(let i=0;i<lista.length;i++){ s+=lista[i].prob; if(r<=s) return lista[i]; }
+  return lista[0];
+}
+
+function obtenerObjetoAleatorio(){
+  const rango = elegirPorProb(rangosProb).rango;
+  const pool = objetosPorRango[rango] || objetosPorRango["Común"];
+  const base = pool[Math.floor(Math.random()*pool.length)];
+  // mutacion
+  const mut = elegirPorProb(mutaciones).code;
+  const name = mut ? `${base} (${mut})` : base;
+  return { nombre: name, rango: rango };
+}
+
+/* ====================== ESTADO CLIENTE ====================== */
+let me = null; // {user, coins, tickets, objetos:[], historial:[]}
+let ventasCache = {}; // ventas actuales
+let chatCache = [];
+
+/* ====================== UI HELPERS ====================== */
+const $ = id => document.getElementById(id);
+function showMe(){ $('meUser').innerText = me ? me.user : '—'; $('meCoins').innerText = me ? (me.coins||0) : 0; $('meTickets').innerText = me ? (me.tickets||0) : 0; $('ticketCount').innerText = me ? (me.tickets||0) : 0; }
+
+/* render inventario */
+function renderInventario(){
+  const inv = $('invList'); inv.innerHTML = '';
+  if(!me || !me.objetos || me.objetos.length===0){ inv.innerHTML = '<div class="small">Inventario vacío</div>'; return; }
+  me.objetos.forEach((it, idx)=>{
+    const d = document.createElement('div'); d.className='obj';
+    const left = document.createElement('div'); left.innerHTML = `<strong>${it.nombre}</strong><div class="small">${it.rango}</div>`;
+    const right = document.createElement('div');
+    const sellBtn = document.createElement('button'); sellBtn.textContent='Vender'; sellBtn.onclick = ()=> openSellModal(idx);
+    right.appendChild(sellBtn);
+    d.appendChild(left); d.appendChild(right);
+    inv.appendChild(d);
   });
-});
+  // fill sell select options
+  const sel = $('sellSelect'); sel.innerHTML = '';
+  if(me && me.objetos) me.objetos.forEach((o,i)=>{ const opt = document.createElement('option'); opt.value=i; opt.text = `${o.nombre} (${o.rango})`; sel.appendChild(opt); });
+}
 
-// Usuarios -> top y lista
-refUsuarios.on('value', snap=>{
-  const obj = snap.val() || {};
-  actualizarJugadoresUI(obj);
-  // si estoy logueado, refrescar mi UI
-  if(userActual && obj[userActual]){
-    const me = obj[userActual];
-    actualizarTopCoinsUI(me.coins || 0);
-    // inventario e historial UI
-    const items = me.objetos || [];
-    const hist = me.historial || [];
-    // actualizar inv
-    const invDiv = document.getElementById('invLista'); invDiv.innerHTML='';
-    items.forEach(it=>{ let el=document.createElement('div'); el.innerText = it.nombre+" ("+it.rango+")"; invDiv.appendChild(el); });
-    const hisDiv = document.getElementById('histLista'); hisDiv.innerHTML='';
-    hist.forEach(h=>{ let el=document.createElement('div'); el.innerText = `Vendiste ${h.vendido} por ${h.precio} CC`; hisDiv.appendChild(el); });
-    document.getElementById('ticketCount').innerText = me.tickets || 0;
-  }
-});
-
-/* ---------- FUNCIONES FIREBASE ---------- */
-
-function crearCuentaFirebase(user, pass){
-  refUsuarios.child(user).get().then(snap=>{
-    if(snap.exists()){ alert("Usuario ya existe"); return; }
-    // crear 3 comunes
-    const comunes = objetosPorRango["Común"];
-    let objs = [];
-    for(let i=0;i<3;i++){ const n = comunes[Math.floor(Math.random()*comunes.length)]; objs.push({nombre:n, rango:"Común"}); }
-    const data = { pass: pass, coins: 50, objetos: objs, historial: [], tickets: 0, lastSeen: Date.now() };
-    refUsuarios.child(user).set(data).then(()=>{ alert("Cuenta creada con 3 objetos comunes y 50 CC"); });
+/* render ventas */
+function renderVentas(){
+  const list = $('marketList'); list.innerHTML = '';
+  Object.keys(ventasCache).forEach(k=>{
+    const v = ventasCache[k];
+    const d = document.createElement('div'); d.className='obj';
+    d.innerHTML = `<div><strong>${v.nombre}</strong> <div class="small">${v.rango}</div></div>`;
+    const right = document.createElement('div');
+    right.innerHTML = `<div class="small">${v.precio} CC</div>`;
+    const btn = document.createElement('button');
+    btn.textContent = (me && me.user === v.vendedor) ? 'Tu venta' : 'Comprar';
+    btn.disabled = (me && me.user === v.vendedor);
+    btn.onclick = ()=> comprarVenta(k);
+    right.appendChild(btn);
+    d.appendChild(right);
+    list.appendChild(d);
   });
 }
 
-function loginFirebase(user, pass){
-  refUsuarios.child(user).get().then(snap=>{
-    if(!snap.exists() || snap.val().pass !== pass){ alert("Usuario o contraseña incorrectos"); return; }
-    userActual = user;
-    localStorage.setItem('userActual', userActual);
-    // carga UI se hace por el listener de refUsuarios
-    refUsuarios.child(user).update({ lastSeen: Date.now() });
-    mostrar('menu');
+/* render chat */
+function renderChat(){
+  const c = $('chatMensajes'); c.innerHTML='';
+  chatCache.forEach(m=>{
+    const d = document.createElement('div'); d.innerHTML = `<small style="color:#666">${new Date(m.ts).toLocaleTimeString()}</small> <strong>${m.usuario}</strong>: ${m.texto}`;
+    c.appendChild(d);
+  });
+  c.scrollTop = c.scrollHeight;
+}
+
+/* render players + top */
+function renderPlayersList(usersObj){
+  const players = $('playersList'); players.innerHTML='';
+  const arr = Object.keys(usersObj||{}).map(u=>({user:u, coins: usersObj[u].coins||0, lastSeen:usersObj[u].lastSeen||0}));
+  arr.sort((a,b)=>b.lastSeen-a.lastSeen);
+  $('activeCount').innerText = arr.length;
+  arr.forEach(p=>{
+    const d = document.createElement('div'); d.className='small'; d.innerText = `${p.user} • ${p.coins} CC`;
+    players.appendChild(d);
+  });
+  // top
+  const top = $('topList'); top.innerHTML='';
+  arr.sort((a,b)=>b.coins-a.coins).slice(0,10).forEach(t=>{
+    const d = document.createElement('div'); d.className='small'; d.innerText = `${t.user}: ${t.coins} CC`;
+    top.appendChild(d);
   });
 }
 
-function sumarCoinsFirebase(amount){
-  if(!userActual) return;
-  refUsuarios.child(userActual).get().then(snap=>{
-    const cur = (snap.exists() && snap.val().coins) ? snap.val().coins : 0;
-    refUsuarios.child(userActual).update({ coins: cur + (amount||0) });
-  });
-}
-
-function ponerEnVentaFirebase(index, precio){
-  if(!userActual){ alert("Inicia sesión"); return; }
-  refUsuarios.child(userActual).get().then(snap=>{
-    const data = snap.val();
-    if(!data || !data.objetos || !data.objetos[index]){ alert("Objeto inválido"); return; }
-    const obj = data.objetos[index];
-    // remover del inventario local y subir cambios
-    data.objetos.splice(index,1);
-    refUsuarios.child(userActual).update({ objetos: data.objetos }).then(()=>{
-      // push venta
-      const venta = { vendedor: userActual, nombre: obj.nombre, precio: precio, rango: obj.rango, ts: Date.now() };
-      refVentas.push(venta);
+/* render objects by rarity preview */
+function renderObjectsByRarity(){
+  const cont = $('objectsByRarity'); cont.innerHTML='';
+  Object.keys(objetosPorRango).forEach(r=>{
+    const group = objetosPorRango[r];
+    group.forEach(name=>{
+      const d = document.createElement('div'); d.className='obj'; d.innerHTML = `<div>${name}<div class="small">${r}</div></div><div><span class="badge rare-${r}">${r}</span></div>`;
+      cont.appendChild(d);
     });
   });
 }
 
-function comprarVentaFirebase(key){
-  if(!userActual){ alert("Inicia sesión"); return; }
+/* render preview small list for side */
+function renderPreview(){
+  const p = $('objPreview'); p.innerHTML='';
+  const sample = [];
+  Object.keys(objetosPorRango).forEach(r=>{
+    objetosPorRango[r].slice(0,3).forEach(n=> sample.push({n,r}));
+  });
+  sample.slice(0,12).forEach(s=>{
+    const d = document.createElement('div'); d.className='small'; d.innerText = `${s.n} (${s.r})`; p.appendChild(d);
+  });
+}
+
+/* ====================== AUTH / USERS ====================== */
+function createAccount(user, pass){
+  if(!user || !pass) return alert('Usuario y contraseña requeridos');
+  refUsers.child(user).get().then(snap=>{
+    if(snap.exists()) return alert('Usuario ya existe');
+    // crear 3 comunes
+    const comunes = objetosPorRango['Común'];
+    const objs = [];
+    for(let i=0;i<3;i++){ objs.push({nombre: comunes[Math.floor(Math.random()*comunes.length)], rango:'Común'}); }
+    const payload = { pass: pass, coins:50, tickets:0, objetos: objs, historial: [], lastSeen: Date.now() };
+    refUsers.child(user).set(payload).then(()=>{ alert('Cuenta creada: 3 objetos comunes y 50 CC'); });
+  });
+}
+
+function login(user, pass){
+  if(!user || !pass) return alert('Usuario y contraseña requeridos');
+  refUsers.child(user).get().then(snap=>{
+    if(!snap.exists()) return alert('Usuario no encontrado');
+    const val = snap.val();
+    if(val.pass !== pass) return alert('Contraseña incorrecta');
+    // login success
+    me = { user: user, coins: val.coins||0, tickets: val.tickets||0, objetos: val.objetos||[], historial: val.historial||[] };
+    localStorage.setItem('mj_user', user);
+    // update lastSeen
+    refUsers.child(user).update({ lastSeen: Date.now() });
+    postLoginUI();
+  });
+}
+
+function postLoginUI(){
+  $('btnLogin').style.display='none';
+  $('btnCreate').style.display='none';
+  $('btnLogout').style.display='inline-block';
+  $('meUser').innerText = me.user;
+  showMe();
+  renderInventario();
+  renderVentas(); renderPreview();
+}
+
+/* logout */
+function logout(){
+  me = null;
+  localStorage.removeItem('mj_user');
+  $('btnLogin').style.display='inline-block';
+  $('btnCreate').style.display='inline-block';
+  $('btnLogout').style.display='none';
+  $('meUser').innerText='—'; $('meCoins').innerText='0';
+}
+
+/* ====================== MARKET ACTIONS ====================== */
+function openSellModal(index){
+  const price = prompt('Precio en CarriCoins para vender este objeto:');
+  const p = parseInt(price);
+  if(isNaN(p) || p<=0) return alert('Precio inválido');
+  // poner en venta firebase: remove obj from user -> push venta
+  refUsers.child(me.user).child('objetos').get().then(snap=>{
+    const arr = snap.exists() ? snap.val() : [];
+    if(!arr[index]) return alert('Objeto no encontrado');
+    const obj = arr.splice(index,1)[0];
+    refUsers.child(me.user).update({ objetos: arr }).then(()=>{
+      const venta = { vendedor: me.user, nombre: obj.nombre, rango: obj.rango, precio: p, ts: Date.now() };
+      const newKey = refVentas.push(venta).key;
+      // venta ya publicada; firebase listener actualizará UI
+    });
+  });
+}
+
+function sellSelected(){
+  const idx = parseInt($('sellSelect').value);
+  const pr = parseInt($('sellPrice').value);
+  if(isNaN(pr) || pr<=0) return alert('Precio inválido');
+  openSellModal(idx); // reuse prompt flow
+}
+window.sellSelected = sellSelected;
+
+/* comprar venta by key */
+function comprarVenta(key){
+  if(!me) return alert('Inicia sesión para comprar');
   refVentas.child(key).get().then(snap=>{
-    if(!snap.exists()){ alert("Venta no existe"); return; }
-    const venta = snap.val();
-    if(venta.vendedor === userActual){ alert("No puedes comprar tu propio objeto"); return; }
-    refUsuarios.child(userActual).get().then(buySnap=>{
-      const buyer = buySnap.val();
-      if((buyer.coins||0) < venta.precio){ alert("No tienes suficientes CC"); return; }
-      // restar al comprador
-      const newBuyerCoins = (buyer.coins||0) - venta.precio;
-      refUsuarios.child(userActual).update({ coins: newBuyerCoins }).then(()=>{
-        // agregar objeto al comprador
-        refUsuarios.child(userActual).child('objetos').get().then(objSnap=>{
-          const arr = objSnap.exists() ? objSnap.val() : [];
-          arr.push({ nombre: venta.nombre, rango: venta.rango });
-          refUsuarios.child(userActual).update({ objetos: arr }).then(()=>{
-            // dar dinero al vendedor y registrar historial
-            refUsuarios.child(venta.vendedor).get().then(vsnap=>{
-              const vendData = vsnap.val() || {};
-              const vendCoins = (vendData.coins||0) + venta.precio;
-              const vendHist = vendData.historial || [];
-              vendHist.push({ vendido: venta.nombre, precio: venta.precio, cuando: Date.now() });
-              refUsuarios.child(venta.vendedor).update({ coins: vendCoins, historial: vendHist }).then(()=>{
-                // eliminar venta
-                refVentas.child(key).remove();
-              });
-            });
+    if(!snap.exists()) return alert('Venta no existe');
+    const v = snap.val();
+    if(v.vendedor === me.user) return alert('No puedes comprar tu propia venta');
+    // verify coins
+    if((me.coins||0) < v.precio) return alert('No tienes CarriCoins');
+    // deduct buyer
+    const newBuyerCoins = (me.coins||0) - v.precio;
+    refUsers.child(me.user).update({ coins: newBuyerCoins }).then(()=>{
+      // add object to buyer
+      refUsers.child(me.user).child('objetos').get().then(buySnap=>{
+        const buyerObjs = buySnap.exists() ? buySnap.val() : [];
+        buyerObjs.push({ nombre: v.nombre, rango: v.rango });
+        refUsers.child(me.user).update({ objetos: buyerObjs });
+        // pay seller
+        refUsers.child(v.vendedor).get().then(snapV=>{
+          const seller = snapV.val() || {};
+          const newSellerCoins = (seller.coins||0) + v.precio;
+          const sellerHist = seller.historial || [];
+          sellerHist.push({ vendido: v.nombre, precio: v.precio, cuando: Date.now() });
+          refUsers.child(v.vendedor).update({ coins: newSellerCoins, historial: sellerHist }).then(()=>{
+            // remove venta
+            refVentas.child(key).remove();
           });
         });
       });
@@ -482,9 +458,5 @@ function comprarVentaFirebase(key){
   });
 }
 
-function obtenerObjetoAleatorioFirebase(){
-  // wrapper para compatibilidad
-  const rango = (function(){
-    const r = Math.random()*100; let acum=0;
-    for(let i=0;i<rangosProb.length;i++){ acum+=rangosProb[i].prob; if(r<=acum) return rangosProb[i].rango; }
-    return "Común"
+/* ====================== TICKETS & RULETA ====================== */
+function
