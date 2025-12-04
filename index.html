@@ -451,7 +451,7 @@ function comprarVenta(key){
           refUsers.child(v.vendedor).update({ coins: newSellerCoins, historial: sellerHist }).then(()=>{
             // remove venta
             refVentas.child(key).remove();
-          });
+          }); 
         });
       });
     });
@@ -459,4 +459,176 @@ function comprarVenta(key){
 }
 
 /* ====================== TICKETS & RULETA ====================== */
-function
+function comprarTickets(cant){
+  if(!me) return alert('Inicia sesión');
+  const precio = cant === 1 ? 100 : 900;
+  if((me.coins||0) < precio) return alert('No tienes CC');
+  const newCoins = (me.coins||0) - precio;
+  const newTickets = (me.tickets||0) + cant;
+  refUsers.child(me.user).update({ coins: newCoins, tickets: newTickets });
+}
+
+function usarTicket(){
+  if(!me) return alert('Inicia sesión');
+  if((me.tickets||0) < 1) return alert('No tienes tickets');
+  refUsers.child(me.user).get().then(snap=>{
+    const data = snap.val() || {};
+    const tickets = (data.tickets||0) - 1;
+    refUsers.child(me.user).update({ tickets: tickets }).then(()=>{
+      const obj = obtenerObjetoAleatorio();
+      // add to user
+      refUsers.child(me.user).child('objetos').get().then(os=>{
+        const arr = os.exists() ? os.val() : [];
+        arr.push(obj);
+        refUsers.child(me.user).update({ objetos: arr }).then(()=> alert('Ganaste: ' + obj.nombre));
+      });
+    });
+  });
+}
+
+/* ====================== REGALO 500 TOQUES ====================== */
+let giftCount = 0;
+$('giftBtn')?.addEventListener?.('click', ()=>{ giftCount++; $('giftCount').innerText = `${giftCount} / 500`; if(giftCount>=500){ if(!me) return alert('Inicia sesión'); const obj = obtenerObjetoAleatorio(); refUsers.child(me.user).child('objetos').get().then(snap=>{ const arr = snap.exists()?snap.val():[]; arr.push(obj); refUsers.child(me.user).update({ objetos: arr }).then(()=> alert('Recibiste: '+obj.nombre)); }); giftCount=0; $('giftCount').innerText='0 / 500'; } });
+
+/* ====================== CHAT Realtime ====================== */
+$('sendChat').addEventListener('click', ()=> {
+  const txt = $('chatInput').value.trim();
+  if(!txt) return;
+  if(!me) return alert('Inicia sesión para chatear');
+  refChat.push({ usuario: me.user, texto: txt, ts: Date.now() });
+  $('chatInput').value='';
+});
+/* reset chat cada 3 minutos en servidor: aquí cliente también pide borrarlo cada 3m */
+setInterval(()=>{ refChat.remove(); }, 180000);
+
+/* ====================== MINIJUEGO: cubos ====================== */
+let score = 0;
+let cubos = [];
+let gameInterval = null;
+let paused = false;
+function startMinigame(){
+  if(gameInterval) clearInterval(gameInterval);
+  gameInterval = setInterval(()=>{
+    // spawn cube sometimes
+    if(Math.random()<0.06){
+      const c = document.createElement('div'); c.className='cubo'; c.style.left = (Math.random()*80)+'%'; c.style.top='-10%';
+      $('juegoArea').appendChild(c);
+      cubos.push(c);
+      // remove after time
+      setTimeout(()=>{ if(c.parentNode) c.parentNode.removeChild(c); cubos = cubos.filter(x=>x!==c); }, 3000);
+    }
+    // move cubes down
+    cubos.forEach((c,i)=>{
+      const top = parseFloat(c.style.top) || -10;
+      c.style.top = (top + 0.9) + '%';
+      // collision
+      const pL = parseFloat($('player').style.left)||45, pR = pL + 10;
+      const cL = parseFloat(c.style.left)||0, cR = cL + 10;
+      const pT = 80, pB = 95; // approximate
+      const cT = parseFloat(c.style.top), cB = cT + 12;
+      if(!(pR < cL || pL > cR || pB < cT || pT > cB)){
+        // collision: end round
+        if(me) refUsers.child(me.user).get().then(snap=>{ const cur = snap.val()||{}; const newCoins = (cur.coins||0) + score; refUsers.child(me.user).update({ coins: newCoins }); });
+        alert('Te chocaste! Ganaste ' + score + ' CC (transferidos)');
+        score = 0; $('scoreVal').innerText = score;
+        cubos.forEach(cc=>cc.remove()); cubos=[]; clearInterval(gameInterval); gameInterval = null;
+      }
+    });
+  }, 40);
+}
+$('leftBtn').addEventListener('click', ()=>{ const cur = parseFloat($('player').style.left)||45; $('player').style.left = Math.max(0,cur-10)+'%'; });
+$('rightBtn').addEventListener('click', ()=>{ const cur = parseFloat($('player').style.left)||45; $('player').style.left = Math.min(80,cur+10)+'%'; });
+$('resetMinigame').addEventListener('click', ()=>{
+  if(me) refUsers.child(me.user).get().then(snap=>{ const d = snap.val()||{}; const newCoins = (d.coins||0) + score; refUsers.child(me.user).update({ coins: newCoins }); });
+  score = 0; $('scoreVal').innerText = 0;
+  cubos.forEach(c=>c.remove()); cubos=[]; if(gameInterval){ clearInterval(gameInterval); gameInterval = null; } startMinigame();
+});
+$('pauseBtn').addEventListener('click', ()=>{
+  if(paused){ paused=false; $('pauseBtn').innerText='⏹️ Pausar'; startMinigame(); } else { paused=true; $('pauseBtn').innerText='▶️ Reanudar'; if(gameInterval) { clearInterval(gameInterval); gameInterval = null; } }
+});
+
+/* increase points as cubes pass bottom (approx) */
+setInterval(()=>{ // simulate awarding points when cube passes bottom
+  // count removed cubes -> award points
+  // simple approach: random chance to increment score
+  if(gameInterval && Math.random()<0.12){ score++; $('scoreVal').innerText = score; }
+}, 600);
+
+/* ====================== LISTENERS Y LISTENERS FIREBASE ====================== */
+$('btnCreate').addEventListener('click', ()=> createAccount($('inputUser').value.trim(), $('inputPass').value.trim()));
+$('btnLogin').addEventListener('click', ()=> login($('inputUser').value.trim(), $('inputPass').value.trim()));
+$('btnLogout').addEventListener('click', ()=> logout());
+$('btnSell').addEventListener('click', ()=> sellSelected());
+$('buy1').addEventListener('click', ()=> comprarTickets(1));
+$('buy10').addEventListener('click', ()=> comprarTickets(10));
+$('spin').addEventListener('click', ()=> usarTicket());
+$('sendChat').addEventListener('click', ()=> $('sendChat').click()); // noop in case button not available
+
+/* Firebase realtime listeners */
+refChat.on('value', snap=>{
+  const val = snap.val() || {};
+  const arr = Object.keys(val).map(k=>val[k]).sort((a,b)=>a.ts - b.ts);
+  chatCache = arr;
+  renderChat();
+});
+
+refVentas.on('value', snap=>{
+  const val = snap.val() || {};
+  ventasCache = val;
+  renderVentas();
+});
+
+/* users listener for active players and my data updates */
+refUsers.on('value', snap=>{
+  const val = snap.val() || {};
+  renderPlayersList(val);
+  // if logged in, refresh my data from DB to stay synced
+  const logged = localStorage.getItem('mj_user');
+  if(logged){
+    refUsers.child(logged).get().then(s=>{
+      const data = s.val();
+      if(data){
+        me = { user: logged, coins: data.coins||0, tickets: data.tickets||0, objetos: data.objetos||[], historial: data.historial||[] };
+        showMe(); renderInventario();
+      }
+    });
+  }
+});
+
+/* comprarVenta wrapper for global use (button sets) */
+/* We exposed comprarVenta to window earlier implicitly when creating buttons by referencing the function name string. To ensure it's available globally: */
+window.comprarVenta = comprarVenta;
+
+/* expose helper sellSelected globally */
+window.openSellModal = openSellModal;
+function sellSelected(){
+  const idx = $('sellSelect').value;
+  const price = parseInt($('sellPrice').value);
+  if(isNaN(price) || price<=0) return alert('Precio inválido');
+  openSellModal(parseInt(idx));
+}
+window.sellSelected = sellSelected;
+
+/* ====================== INICIALIZACIÓN UI ====================== */
+renderPreview();
+renderObjectsByRarity();
+startMinigame(); // inicia minijuego en background
+
+/* restaurar sesión guardada */
+const saved = localStorage.getItem('mj_user');
+if(saved){
+  // try to restore me object from firebase
+  refUsers.child(saved).get().then(snap=>{
+    if(snap.exists()){
+      const d = snap.val();
+      me = { user: saved, coins: d.coins||0, tickets: d.tickets||0, objetos: d.objetos||[], historial: d.historial||[] };
+      localStorage.setItem('mj_user', saved);
+      postLoginUI();
+    }
+  });
+}
+</script>
+
+</body>
+</html>
+```0
