@@ -1,186 +1,196 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Marketplace Game</title>
+
+<title>Juego Marketplace</title>
+
+<!-- 🔥 Estilo especial para CELULAR -->
 <style>
-  body { font-family: Arial; background:#111; color:white; text-align:center; }
-  .seccion { display:none; padding:20px; }
-  button{ padding:10px; margin:5px; font-size:16px; }
-  #chatBox{ width:90%; height:150px; background:#222; margin:auto; padding:10px; overflow-y:scroll; }
-  #jugadoresActivos div, #topGlobal div { background:#222; margin:3px; padding:5px; }
+  body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #0a0f1f, #1c1f3a);
+    color: white;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+  }
+
+  h2, h3 { margin-top: 20px; }
+
+  input {
+    width: 85%;
+    max-width: 330px;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 12px;
+    border: none;
+    font-size: 18px;
+  }
+
+  button {
+    width: 85%;
+    max-width: 330px;
+    padding: 16px;
+    margin: 10px auto;
+    font-size: 20px;
+    font-weight: bold;
+    border: none;
+    border-radius: 14px;
+    background: #00aaff;
+    color: white;
+    display: block;
+    box-shadow: 0 0 10px #00aaff;
+  }
+
+  .backBtn {
+    background: #ff4444;
+    box-shadow: 0 0 10px #ff4444;
+  }
+
+  .menu, .pantalla {
+    display: none;
+  }
+
+  .visible {
+    display: block;
+  }
+
+  .footerStats {
+    margin-top: 25px;
+    padding: 20px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 15px;
+    width: 90%;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .obj {
+    font-size: 30px;
+    margin: 5px;
+  }
 </style>
 </head>
 
 <body>
 
-<!-- ███████████████████████ -->
-<!--       MENÚ DE INICIO     -->
-<!-- ███████████████████████ -->
-<div id="menuInicio" class="seccion" style="display:block;">
-  <h1>Iniciar sesión / Crear cuenta</h1>
+<!-- 🔥 PANTALLA DE INICIO DE SESIÓN -->
+<div id="inicioSesion" class="pantalla visible">
+  <h2>Iniciar sesión / Crear cuenta</h2>
 
-  <input id="userInput" placeholder="Usuario"><br><br>
-  <input id="passInput" type="password" placeholder="Contraseña"><br><br>
+  <input id="nombreInput" placeholder="Nombre">
+  <input id="passInput" type="password" placeholder="Contraseña">
 
-  <button onclick="crearCuenta()">Crear cuenta</button>
+  <button onclick="crearCuenta()">Crear Cuenta</button>
   <button onclick="iniciarSesion()">Entrar</button>
-
 </div>
 
-<!-- ███████████████████████ -->
-<!--     MENÚ PRINCIPAL     -->
-<!-- ███████████████████████ -->
-<div id="menuPrincipal" class="seccion">
-  <h1>Menú Principal</h1>
-  <h3 id="saludo"></h3>
-  <h3>CarriCoins: <span id="coinsCount">0</span></h3>
-  <h3>Tickets: <span id="ticketsCount">0</span></h3>
 
-  <button onclick="mostrar('marketplace')">Marketplace</button><br>
-  <button onclick="mostrar('regalo')">Regalo Diario</button><br>
-  <button onclick="mostrar('tickets')">Comprar Tickets</button><br>
-  <button onclick="mostrar('objLista')">Lista de Objetos</button><br>
-  <button onclick="mostrar('juego')">Juego Mini</button><br>
-  <button onclick="cerrarSesion()">Cerrar Sesión</button><br><br>
+<!-- 🔥 MENÚ PRINCIPAL -->
+<div id="menuPrincipal" class="pantalla">
+  <h2>Menú Principal</h2>
 
-  <!-- ABAJO: lo que tú pediste -->
-  <h2>Chat Global</h2>
-  <div id="chatBox"></div>
-  <input id="chatMensaje" placeholder="Escribe..." style="width:70%;">
-  <button onclick="enviarMensaje()">Enviar</button>
+  <p><b>Carricoins:</b> <span id="coinsLabel">0</span></p>
+  <p><b>Tickets:</b> <span id="ticketsLabel">0</span></p>
 
-  <h2>Jugadores Activos</h2>
-  <div id="jugadoresActivos"></div>
+  <button onclick="abrir('market')">Marketplace</button>
+  <button onclick="abrir('regalo')">Regalo Diario</button>
+  <button onclick="abrir('inventario')">Inventario</button>
+  <button onclick="abrir('chat')">Chat Global</button>
+  <button onclick="abrir('top')">Top Global</button>
+  <button onclick="abrir('activos')">Jugadores Activos</button>
 
-  <h2>Top CarriCoins</h2>
-  <div id="topGlobal"></div>
-
-  <h2>Objetos por rareza</h2>
-  <div id="rarezaBox"></div>
-
+  <div class="footerStats">
+    <h3>📊 Información Global</h3>
+    <p>Top Coins, Rarezas, Activos</p>
+  </div>
 </div>
 
-<!-- ███████████████████ -->
-<!--  OTRAS SECCIONES   -->
-<!-- ███████████████████ -->
 
-<div id="marketplace" class="seccion">
+<!-- 🔥 MARKETPLACE -->
+<div id="market" class="pantalla">
   <h2>Marketplace</h2>
-  <p>Aquí irá el marketplace.</p>
-  <button onclick="mostrar('menuPrincipal')">Volver</button>
+  <p>Próximamente...</p>
+  <button class="backBtn" onclick="volverMenu()">Volver</button>
 </div>
 
-<div id="regalo" class="seccion">
+<!-- 🔥 REGALO DIARIO -->
+<div id="regalo" class="pantalla">
   <h2>Regalo Diario</h2>
   <button onclick="darRegalo()">Reclamar</button>
-  <p id="regaloMsg"></p>
-  <button onclick="mostrar('menuPrincipal')">Volver</button>
+  <p id="regaloResultado"></p>
+  <button class="backBtn" onclick="volverMenu()">Volver</button>
 </div>
 
-<div id="tickets" class="seccion">
-  <h2>Tickets</h2>
-  <p>Tienes: <span id="ticketsCount2">0</span></p>
-  <button onclick="comprarTicket()">Comprar Ticket (500 CarriCoins)</button>
-  <button onclick="mostrar('menuPrincipal')">Volver</button>
+<!-- 🔥 INVENTARIO -->
+<div id="inventario" class="pantalla">
+  <h2>Inventario</h2>
+  <div id="listaInventario"></div>
+  <button class="backBtn" onclick="volverMenu()">Volver</button>
 </div>
 
-<div id="objLista" class="seccion">
-  <h2>Tu Inventario</h2>
-  <div id="inventarioBox"></div>
-  <button onclick="mostrar('menuPrincipal')">Volver</button>
+<!-- 🔥 CHAT -->
+<div id="chat" class="pantalla">
+  <h2>Chat Global</h2>
+  <div id="chatLog" style="height:200px;overflow-y:scroll;background:#0003;padding:10px;"></div>
+
+  <input id="mensajeInput" placeholder="Mensaje">
+  <button onclick="enviarMensaje()">Enviar</button>
+
+  <button class="backBtn" onclick="volverMenu()">Volver</button>
 </div>
 
-<div id="juego" class="seccion">
-  <h2>Mini juego</h2>
-  <p>Próximamente</p>
-  <button onclick="mostrar('menuPrincipal')">Volver</button>
+<!-- 🔥 TOP -->
+<div id="top" class="pantalla">
+  <h2>Top Global</h2>
+  <p id="topLista"></p>
+  <button class="backBtn" onclick="volverMenu()">Volver</button>
 </div>
 
-<!-- ███████████████████████ -->
-<!--        FIREBASE         -->
-<!-- ███████████████████████ -->
+<!-- 🔥 JUGADORES ACTIVOS -->
+<div id="activos" class="pantalla">
+  <h2>Jugadores Activos</h2>
+  <p id="listaActivos"></p>
+  <button class="backBtn" onclick="volverMenu()">Volver</button>
+</div>
+
+
+
+<!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+<!-- 🔥 FIREBASE SDK IMPORT -->
+<!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
 
 <script>
+// CONFIG FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyADVjuoLhcH34XPmZv-sx-eP71rIxVEKEY",
   authDomain: "juego-marketplace.firebaseapp.com",
   projectId: "juego-marketplace",
-  storageBucket: "juego-marketplace-firebasestorage.app",
+  storageBucket: "juego-marketplace.firebasestorage.app",
   messagingSenderId: "258620166110",
   appId: "1:258620166110:web:3a101d6f7743b6dbc6574f",
+  measurementId: "G-0GZDE8FNEC",
   databaseURL: "https://juego-marketplace-default-rtdb.firebaseio.com/"
 };
 
+// INICIAR FIREBASE
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 let userActual = null;
 
-function mostrar(id){
-  document.querySelectorAll(".seccion").forEach(s=>s.style.display="none");
-  document.getElementById(id).style.display="block";
-}
-
-function crearCuenta(){
-  let u = userInput.value.trim();
-  let p = passInput.value.trim();
-  if(!u || !p) return alert("Llene todo");
-
-  db.ref("usuarios/"+u).set({
-    pass:p,
-    carriCoins:1500,
-    tickets:3,
-    inventario:[]
-  });
-
-  alert("Cuenta creada");
-}
-
-function iniciarSesion(){
-  let u = userInput.value.trim();
-  let p = passInput.value.trim();
-
-  db.ref("usuarios/"+u).once("value", snap=>{
-    if(!snap.exists()) return alert("No existe");
-
-    let d=snap.val();
-    if(d.pass !== p) return alert("Contraseña incorrecta");
-
-    userActual = u;
-    cargarDatos();
-    mostrar("menuPrincipal");
-  });
-}
-
-function cerrarSesion(){
-  userActual=null;
-  mostrar("menuInicio");
-}
-
-function cargarDatos(){
-  db.ref("usuarios/"+userActual).on("value", snap=>{
-    let d=snap.val();
-    coinsCount.innerText = d.carriCoins;
-    ticketsCount.innerText = d.tickets;
-    ticketsCount2.innerText = d.tickets;
-    saludo.innerText = "Bienvenido: " + userActual;
-
-    inventarioBox.innerHTML = d.inventario.join(" ");
-  });
-}
-
-/* --- Objetos y probabilidades --- */
-
+// OBJETOS Y RAREZAS
 const objetos = {
   comun: ["🐻","🐺","🐶","🐱","🐯"],
   poco: ["🐨","🦁","🐵","🙉","🐮"],
   epico: ["🦝","🦊","🐰","🐭","🐹","🐻‍❄️"],
   mitico: ["🗽","🗿","🌬️","🌀","🌪️"],
-  legendario: ["🦠","🪱","🐛","🌊","🌄"],
+  legend: ["🦠","🪱","🐛","🌊","🌄"],
   ultra: ["🤖","🎃","👿","⛄","👺","☠️"],
   xprn: ["🍄","🌵","🌴","🌳","🌲"],
   toxtor: ["🦕","🦖","🐊","🐍","🦎"],
@@ -189,102 +199,166 @@ const objetos = {
   maestro: ["🕎","🔯","✡️","☦️","✝️","🪯","☪️","☯️","☮️","☸️","🕉️","🛐","⚛️"]
 };
 
-const probabilidades = {
-  comun: 40,
+// PROBABILIDADES POR RAREZA
+const prob = {
+  comun: 50,
   poco: 20,
-  epico: 12,
-  mitico: 8,
-  legendario: 6,
-  ultra: 5,
-  xprn: 4,
-  toxtor: 3,
-  gamma: 1.3,
-  dioses: 0.6,
-  maestro: 0.1
+  epico: 10,
+  mitico: 6,
+  legend: 5,
+  ultra: 3,
+  xprn: 2,
+  toxtor: 2,
+  gamma: 1,
+  dioses: 0.5,
+  maestro: 0.5
 };
 
-function generarObjeto(){
+
+// FUNCIONES DE INTERFAZ
+function mostrar(id){
+  document.querySelectorAll(".pantalla").forEach(p => p.classList.remove("visible"));
+  document.getElementById(id).classList.add("visible");
+}
+
+function volverMenu(){
+  mostrar("menuPrincipal");
+}
+
+function abrir(id){
+  mostrar(id);
+}
+
+
+// CREAR CUENTA
+function crearCuenta(){
+  let user = nombreInput.value;
+  let pass = passInput.value;
+
+  if(user.length < 3) return alert("Nombre muy corto");
+
+  db.ref("usuarios/" + user).set({
+    pass: pass,
+    coins: 50,
+    tickets: 3,
+    inventario: {}
+  });
+
+  alert("Cuenta creada");
+}
+
+// INICIAR SESIÓN
+function iniciarSesion(){
+  let user = nombreInput.value;
+  let pass = passInput.value;
+
+  db.ref("usuarios/" + user).once("value", snap=>{
+    if(!snap.exists()) return alert("No existe");
+
+    let data = snap.val();
+    if(data.pass !== pass) return alert("Contraseña incorrecta");
+
+    userActual = user;
+    cargarDatos();
+    mostrar("menuPrincipal");
+  });
+}
+
+
+// CARGAR DATOS DEL USUARIO
+function cargarDatos(){
+  db.ref("usuarios/" + userActual).on("value", snap=>{
+    let d = snap.val();
+    coinsLabel.textContent = d.coins;
+    ticketsLabel.textContent = d.tickets;
+
+    // inventario
+    let html = "";
+    for(let i in d.inventario){
+      html += `<span class="obj">${d.inventario[i]}</span>`;
+    }
+    listaInventario.innerHTML = html;
+  });
+}
+
+
+// REGALO DIARIO
+function darRegalo(){
+  let r = obtenerRandomObjeto();
+  
+  db.ref("usuarios/" + userActual + "/inventario").push(r);
+
+  regaloResultado.innerHTML = "Ganaste: " + r;
+}
+
+
+// SISTEMA RANDOM DE OBJETOS
+function obtenerRandomObjeto(){
   let total = 0;
-  for(let r in probabilidades) total+=probabilidades[r];
+  for(let r in prob) total += prob[r];
 
-  let random = Math.random()*total;
-  let suma = 0;
+  let rand = Math.random()*total;
+  let acum = 0;
 
-  for(let r in probabilidades){
-    suma+=probabilidades[r];
-    if(random <= suma){
+  for(let r in prob){
+    acum += prob[r];
+    if(rand <= acum){
       let arr = objetos[r];
       return arr[Math.floor(Math.random()*arr.length)];
     }
   }
+  return objetos.comun[0];
 }
 
-function darRegalo(){
-  let obj = generarObjeto();
 
-  db.ref("usuarios/"+userActual+"/inventario").get().then(s=>{
-    let inv = s.val() || [];
-    inv.push(obj);
-    db.ref("usuarios/"+userActual+"/inventario").set(inv);
-    regaloMsg.innerText="Ganaste: " + obj;
+// CHAT GLOBAL
+function enviarMensaje(){
+  let msg = mensajeInput.value;
+  if(msg.trim()=="") return;
+
+  db.ref("chat").push({
+    user: userActual,
+    msg: msg
   });
+
+  mensajeInput.value = "";
 }
 
-function comprarTicket(){
-  db.ref("usuarios/"+userActual).once("value", snap=>{
-    let d=snap.val();
-
-    if(d.carriCoins < 500)
-      return alert("No tienes suficiente CarriCoins");
-
-    db.ref("usuarios/"+userActual+"/carriCoins").set(d.carriCoins - 500);
-    db.ref("usuarios/"+userActual+"/tickets").set(d.tickets + 1);
-  });
-}
-
-/* --- CHAT --- */
-
-db.ref("chat").on("value", snap=>{
-  chatBox.innerHTML="";
-  snap.forEach(m=>{
-    chatBox.innerHTML+=m.val()+"<br>";
-  });
+db.ref("chat").on("child_added", snap=>{
+  let d = snap.val();
+  chatLog.innerHTML += `<p><b>${d.user}:</b> ${d.msg}</p>`;
 });
 
-function enviarMensaje(){
-  let msg = userActual + ": " + chatMensaje.value;
-  db.ref("chat").push(msg);
-  chatMensaje.value="";
-}
 
-/* --- Jugadores activos + Top --- */
-
-setInterval(()=>{
-  db.ref("usuarios").once("value", snap=>{
-    jugadoresActivos.innerHTML="";
-    topGlobal.innerHTML="";
-    rarezaBox.innerHTML = "";
-
-    let arr=[];
-
-    snap.forEach(u=>{
-      let d=u.val();
-      jugadoresActivos.innerHTML += `<div>${u.key}</div>`;
-      arr.push({user:u.key, carriCoins:d.carriCoins});
-    });
-
-    arr.sort((a,b)=>b.carriCoins-a.carriCoins);
-
-    arr.slice(0,10).forEach(t=>{
-      topGlobal.innerHTML += `<div>${t.user}: ${t.carriCoins} CC</div>`;
-    });
-
-    for(let r in objetos){
-      rarezaBox.innerHTML += `<div>${r}: ${objetos[r].join(" ")}</div>`;
-    }
+// TOP GLOBAL
+db.ref("usuarios").on("value", snap=>{
+  let lista = [];
+  snap.forEach(u=>{
+    lista.push({nombre: u.key, coins: u.val().coins});
   });
-},2000);
+
+  lista.sort((a,b)=>b.coins - a.coins);
+
+  topLista.innerHTML = lista.slice(0,10).map((e,i)=>
+    `<p>${i+1}. ${e.nombre} - ${e.coins}💰</p>`
+  ).join("");
+});
+
+
+// JUGADORES ACTIVOS
+setInterval(()=>{
+  db.ref("activos/"+userActual).set(Date.now());
+  db.ref("activos/"+userActual).onDisconnect().remove();
+}, 5000);
+
+db.ref("activos").on("value", snap=>{
+  let html = "";
+  snap.forEach(u=>{
+    html += `<p>${u.key}</p>`;
+  });
+  listaActivos.innerHTML = html;
+});
 </script>
 
 </body>
-</html>
+  </html>
